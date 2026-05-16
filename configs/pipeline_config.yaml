@@ -1,0 +1,41 @@
+# ============================================================
+# Pipeline Configuration — Healthcare MRAG
+# ============================================================
+# Controls which pipeline mode to run and how components connect.
+# ============================================================
+
+pipeline:
+  # Pipeline mode: "simple_vqa" (Phase 1), "rag_vqa" (Phase 3+), "full_rag" (Phase 5)
+  mode: "simple_vqa"
+
+  # --- Simple VQA (Phase 1) ---
+  simple_vqa:
+    model_config: "configs/model_config.yaml"
+    data_config: "configs/data_config.yaml"
+    max_samples: 10                      # for quick testing
+
+  # --- RAG VQA (Phase 3+) ---
+  rag_vqa:
+    model_config: "configs/model_config.yaml"
+    data_config: "configs/data_config.yaml"
+    retrieval_config: "configs/retrieval_config.yaml"
+    use_reranking: true
+    max_context_tokens: 1024
+
+  # --- Full RAG (Phase 5) ---
+  full_rag:
+    model_config: "configs/model_config.yaml"
+    data_config: "configs/data_config.yaml"
+    retrieval_config: "configs/retrieval_config.yaml"
+    use_reranking: true
+    use_grounding: true
+    use_safety_check: true
+    max_context_tokens: 2048
+
+# --- Output Settings ---
+output:
+  results_dir: "outputs/results"
+  logs_dir: "outputs/logs"
+  save_predictions: true
+  save_metrics: true
+  verbose: true

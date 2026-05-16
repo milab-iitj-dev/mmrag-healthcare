@@ -1,0 +1,79 @@
+# ============================================================
+# Healthcare Multimodal RAG — .gitignore
+# ============================================================
+
+# ── Data & Outputs (too large for git) ──
+data/openi/
+data/indexes/
+checkpoints/*/
+outputs/logs/
+outputs/results/
+outputs/evaluation/
+outputs/validation/
+experiments/results/
+experiments/logs/
+
+# ── Model Weights ──
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.gguf
+*.onnx
+
+# ── Indexes & Serialized Data ──
+*.index
+*.faiss
+*.pkl
+*.npy
+*.npz
+*.h5
+*.hdf5
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.so
+
+# ── Virtual Environments ──
+.venv/
+venv/
+env/
+*.env
+.conda/
+
+# ── IDE ──
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ── Jupyter ──
+.ipynb_checkpoints/
+
+# ── Logs ──
+*.log
+
+# ── Archives ──
+*.zip
+*.tar.gz
+*.7z
+
+# ── Weights & Biases ──
+wandb/
+
+# ── Misc ──
+.cache/
+tmp/

@@ -1,0 +1,39 @@
+# ============================================================
+# Model Configuration — Healthcare MRAG Phase 1
+# ============================================================
+# Change model.name to swap VLMs (e.g., "qwen2-vl-7b" later).
+# The model_factory reads this file and instantiates the right class.
+# ============================================================
+
+model:
+  name: "llava-1.5-7b"
+  model_id: "llava-hf/llava-1.5-7b-hf"
+  device: "auto"                          # "auto", "cuda:0", "cpu"
+
+  quantization:
+    enabled: true
+    bits: 4
+    method: "bitsandbytes"                # "bitsandbytes" | "gptq" | "awq"
+    bnb_4bit_compute_dtype: "float16"
+    bnb_4bit_quant_type: "nf4"
+    bnb_4bit_use_double_quant: true
+
+  generation:
+    max_new_tokens: 512
+    temperature: 0.1
+    top_p: 0.9
+    do_sample: false
+    repetition_penalty: 1.1
+
+  # LoRA / QLoRA fine-tuning settings
+  lora:
+    r: 16
+    lora_alpha: 32
+    lora_dropout: 0.05
+    target_modules:
+      - "q_proj"
+      - "v_proj"
+      - "k_proj"
+      - "o_proj"
+    bias: "none"
+    task_type: "CAUSAL_LM"

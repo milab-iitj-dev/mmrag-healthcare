@@ -1,0 +1,59 @@
+# ============================================================
+# Retrieval Configuration — Healthcare MRAG Phase 3-4
+# ============================================================
+# Controls retrieval methods, index paths, and fusion settings.
+# ============================================================
+
+retrieval:
+  # Which retriever(s) to use
+  # Options: "bm25", "clip", "colqwen2", "hybrid"
+  method: "hybrid"
+
+  # Number of documents to retrieve in Stage 1 (before reranking)
+  top_k_retrieval: 20
+
+  # Number of documents to keep after reranking (Stage 2)
+  top_k_reranked: 5
+
+  # --- BM25 Settings ---
+  bm25:
+    enabled: true
+    k1: 1.5                              # term frequency saturation
+    b: 0.75                              # document length normalization
+    tokenizer: "simple"                  # "simple" | "scispacy" | "nltk"
+    index_path: "data/indexes/bm25_index.pkl"
+
+  # --- CLIP Settings ---
+  clip:
+    enabled: true
+    model_name: "openai/clip-vit-base-patch32"   # or "microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224"
+    batch_size: 32
+    index_path: "data/indexes/clip_faiss.index"
+    embeddings_path: "data/indexes/clip_embeddings.npy"
+
+  # --- ColQwen2 Settings ---
+  colqwen2:
+    enabled: true
+    model_name: "vidore/colqwen2-v1.0"
+    batch_size: 8
+    index_path: "data/indexes/colqwen2_index/"
+
+  # --- RRF Fusion Settings ---
+  rrf:
+    k: 60                                # RRF constant (standard = 60)
+    weights:
+      bm25: 1.0
+      clip: 1.0
+      colqwen2: 1.5                      # give vision retrieval more weight
+
+# --- Reranking ---
+reranking:
+  enabled: true
+  model_name: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+  batch_size: 16
+  max_length: 512
+
+# --- Index Paths ---
+index:
+  base_dir: "data/indexes"
+  document_store_path: "data/indexes/document_store.json"
