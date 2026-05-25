@@ -1,1 +1,1 @@
-# Healthcare MRAG — Core Source Package
+﻿# Healthcare Multimodal RAG

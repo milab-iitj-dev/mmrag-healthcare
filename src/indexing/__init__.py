@@ -1,2 +1,1 @@
-# Healthcare MRAG — Indexing Module
-# Builds and manages the offline knowledge-base index
+﻿# Indexing — document store and index building

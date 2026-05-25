@@ -1,79 +1,48 @@
-# ============================================================
-# Healthcare Multimodal RAG — .gitignore
-# ============================================================
+# Data
+data/
+!data/.gitkeep
+!data/openi/.gitkeep
 
-# ── Data & Outputs (too large for git) ──
-data/openi/
-data/indexes/
-checkpoints/*/
-outputs/logs/
-outputs/results/
-outputs/evaluation/
-outputs/validation/
-experiments/results/
-experiments/logs/
-
-# ── Model Weights ──
+# Checkpoints and models
+checkpoints/
+!checkpoints/.gitkeep
+!checkpoints/llava-medical-vqa/.gitkeep
 *.bin
 *.safetensors
 *.pt
 *.pth
-*.gguf
-*.onnx
 
-# ── Indexes & Serialized Data ──
-*.index
-*.faiss
-*.pkl
-*.npy
-*.npz
-*.h5
-*.hdf5
+# Outputs
+outputs/
+!outputs/.gitkeep
 
-# ── Python ──
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.egg-info/
-*.egg
 dist/
 build/
-.eggs/
-*.so
+*.egg
 
-# ── Virtual Environments ──
+# Virtual environments
 .venv/
 venv/
 env/
-*.env
-.conda/
 
-# ── IDE ──
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
 
-# ── OS ──
+# OS
 .DS_Store
 Thumbs.db
-Desktop.ini
 
-# ── Jupyter ──
+# Jupyter
 .ipynb_checkpoints/
 
-# ── Logs ──
+# Logs
 *.log
-
-# ── Archives ──
-*.zip
-*.tar.gz
-*.7z
-
-# ── Weights & Biases ──
 wandb/
-
-# ── Misc ──
-.cache/
-tmp/

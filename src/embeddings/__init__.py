@@ -1,2 +1,1 @@
-# Healthcare MRAG — Embeddings Module
-# CLIP image/text embeddings, ColQwen2 document embeddings
+﻿# Embeddings — ColQwen2 multi-vector embeddings

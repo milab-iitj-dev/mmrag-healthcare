@@ -1,44 +1,44 @@
 # ============================================================
-# Retrieval Configuration — Healthcare MRAG Phase 3-4
+# Retrieval Configuration — Healthcare MRAG Phase 2
 # ============================================================
 # Controls retrieval methods, index paths, and fusion settings.
+#
+# Phase 2: ColQwen2 only (no BM25, CLIP, RRF, reranking)
 # ============================================================
 
 retrieval:
   # Which retriever(s) to use
-  # Options: "bm25", "clip", "colqwen2", "hybrid"
-  method: "hybrid"
+  # Phase 2: "colqwen2" only
+  # Future: "bm25", "clip", "hybrid"
+  method: "colqwen2"
 
-  # Number of documents to retrieve in Stage 1 (before reranking)
-  top_k_retrieval: 20
+  # Number of documents to retrieve
+  top_k: 3
 
-  # Number of documents to keep after reranking (Stage 2)
-  top_k_reranked: 5
-
-  # --- BM25 Settings ---
+  # --- BM25 Settings (Phase 3 — not yet implemented) ---
   bm25:
-    enabled: true
+    enabled: false
     k1: 1.5                              # term frequency saturation
     b: 0.75                              # document length normalization
     tokenizer: "simple"                  # "simple" | "scispacy" | "nltk"
     index_path: "data/indexes/bm25_index.pkl"
 
-  # --- CLIP Settings ---
+  # --- CLIP Settings (Phase 3 — not yet implemented) ---
   clip:
-    enabled: true
-    model_name: "openai/clip-vit-base-patch32"   # or "microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224"
+    enabled: false
+    model_name: "openai/clip-vit-base-patch32"
     batch_size: 32
     index_path: "data/indexes/clip_faiss.index"
     embeddings_path: "data/indexes/clip_embeddings.npy"
 
-  # --- ColQwen2 Settings ---
+  # --- ColQwen2 Settings (Phase 2 — active) ---
   colqwen2:
     enabled: true
-    model_name: "vidore/colqwen2-v1.0"
-    batch_size: 8
+    model_name: "vidore/colqwen2-v1.0-hf"
+    batch_size: 4                        # conservative for VRAM
     index_path: "data/indexes/colqwen2_index/"
 
-  # --- RRF Fusion Settings ---
+  # --- RRF Fusion Settings (Phase 3 — not yet implemented) ---
   rrf:
     k: 60                                # RRF constant (standard = 60)
     weights:
@@ -46,14 +46,19 @@ retrieval:
       clip: 1.0
       colqwen2: 1.5                      # give vision retrieval more weight
 
-# --- Reranking ---
+# --- Reranking (Phase 3 — not yet implemented) ---
 reranking:
-  enabled: true
+  enabled: false
   model_name: "cross-encoder/ms-marco-MiniLM-L-6-v2"
   batch_size: 16
   max_length: 512
 
+# --- Context Building ---
+context:
+  max_context_tokens: 1024               # token budget for retrieved evidence
+  include_scores: true                   # show relevance scores in context
+
 # --- Index Paths ---
 index:
   base_dir: "data/indexes"
-  document_store_path: "data/indexes/document_store.json"
+  document_store_path: "data/indexes/colqwen2_index/document_store.json"
