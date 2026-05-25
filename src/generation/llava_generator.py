@@ -66,7 +66,15 @@ class LLaVAModel(BaseVLM):
 
         # Build quantization config
         quant_config = None
-        if model_cfg["quantization"]["enabled"]:
+        quant_enabled = model_cfg["quantization"]["enabled"]
+
+        # Auto-disable quantization if no CUDA GPU available
+        if quant_enabled and not torch.cuda.is_available():
+            logger.warning("  4-bit quantization requires CUDA GPU — not available")
+            logger.warning("  Falling back to CPU float16 mode (slow but functional)")
+            quant_enabled = False
+
+        if quant_enabled:
             quant_config = BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_compute_dtype=getattr(
