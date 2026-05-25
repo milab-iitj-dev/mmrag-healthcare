@@ -1,0 +1,402 @@
+"""
+RAG-augmented VQA Pipeline — Phase 2
+
+End-to-end online pipeline:
+    1. Load saved ColQwen2 index
+    2. Load LLaVA model
+    3. Accept user query (text-only or image + text)
+    4. Retrieve top 3 relevant cases via ColQwen2
+    5. Build context from retrieved evidence
+    6. Generate answer with LLaVA
+    7. Return answer with full provenance
+
+This pipeline extends simple_vqa.py by adding retrieval and context.
+
+Usage:
+    python -m pipelines.rag_vqa --query "What does this chest X-ray show?"
+    python -m pipelines.rag_vqa --query "Describe the findings" --query-image path/to/image.png
+    python -m pipelines.rag_vqa --eval --max-samples 10
+"""
+
+import json
+import time
+from pathlib import Path
+from typing import List, Dict, Any, Optional
+from dataclasses import asdict
+
+from PIL import Image
+
+from src.embeddings.colqwen2_embedder import ColQwen2Embedder
+from src.retrieval.colqwen2_retriever import ColQwen2Retriever
+from src.context.context_builder import ContextBuilder
+from src.generation.rag_generator import RAGGenerator, RAGOutput
+from src.generation.base_generator import BaseVLM
+from src.ingestion.base_loader import BaseDataset
+from src.ingestion.preprocessing import MedicalImagePreprocessor
+from src.utils.logging_utils import setup_logger
+
+logger = setup_logger("pipeline.rag_vqa")
+
+
+class RAGVQAPipeline:
+    """
+    Phase 2 online pipeline: Query → Retrieve → Generate.
+
+    Loads a pre-built ColQwen2 index and LLaVA model, then
+    processes user queries through the full RAG pipeline.
+
+    Supports:
+      - Text-only queries (uses best retrieved image for LLaVA)
+      - Image + text queries (uses query image for LLaVA)
+      - Batch evaluation on dataset samples
+    """
+
+    def __init__(
+        self,
+        vlm: BaseVLM,
+        retrieval_config: dict,
+        index_dir: str = "data/indexes/colqwen2_index",
+        top_k: int = 3,
+        max_context_chars: int = 3000,
+        max_evidence_chars: int = 800,
+        output_dir: str = "outputs/rag_results",
+    ):
+        """
+        Args:
+            vlm:                Loaded LLaVA model.
+            retrieval_config:   Retrieval configuration dict.
+            index_dir:          Path to saved ColQwen2 index.
+            top_k:              Number of documents to retrieve.
+            max_context_chars:  Token budget for context (chars).
+            max_evidence_chars: Token budget per evidence piece (chars).
+            output_dir:         Directory for saving results.
+        """
+        self.vlm = vlm
+        self.retrieval_config = retrieval_config
+        self.top_k = top_k
+        self.output_dir = Path(output_dir)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.preprocessor = MedicalImagePreprocessor()
+
+        # Initialize ColQwen2 embedder and retriever
+        logger.info("Initializing ColQwen2 retriever...")
+        self.embedder = ColQwen2Embedder()
+        self.embedder.load(retrieval_config)
+
+        self.retriever = ColQwen2Retriever(self.embedder)
+        self.retriever.load_index(index_dir)
+        logger.info(
+            f"Index loaded: {self.retriever.num_indexed} documents "
+            f"from {index_dir}"
+        )
+
+        # Context builder and RAG generator
+        self.context_builder = ContextBuilder(
+            max_context_chars=max_context_chars,
+            max_evidence_chars=max_evidence_chars,
+        )
+
+        self.generator = RAGGenerator(
+            vlm=self.vlm,
+            retriever=self.retriever,
+            context_builder=self.context_builder,
+            top_k=self.top_k,
+        )
+
+        logger.info("RAG VQA pipeline ready")
+
+    # ------------------------------------------------------------------ #
+    #  Single query                                                        #
+    # ------------------------------------------------------------------ #
+
+    def run_single(
+        self,
+        query: str,
+        query_image: Optional[Image.Image] = None,
+        query_image_path: Optional[str] = None,
+        top_k: Optional[int] = None,
+    ) -> RAGOutput:
+        """
+        Process a single query through the RAG pipeline.
+
+        Args:
+            query:            Text query / clinical question.
+            query_image:      Optional PIL image for multimodal query.
+            query_image_path: Optional path to query image (alternative
+                              to passing PIL image directly).
+            top_k:            Override default top_k.
+
+        Returns:
+            RAGOutput with answer, retrieved docs, and provenance.
+        """
+        # Load image from path if provided
+        if query_image is None and query_image_path is not None:
+            from src.utils.image_utils import load_image
+            query_image = load_image(query_image_path)
+            query_image = self.preprocessor(query_image)
+
+        logger.info(f"Query: '{query}'")
+        logger.info(f"Query has image: {query_image is not None}")
+
+        output = self.generator.generate(
+            query=query,
+            query_image=query_image,
+            top_k=top_k or self.top_k,
+        )
+
+        return output
+
+    # ------------------------------------------------------------------ #
+    #  Batch evaluation on dataset                                         #
+    # ------------------------------------------------------------------ #
+
+    def run_eval(
+        self,
+        dataset: BaseDataset,
+        sample_indices: Optional[List[int]] = None,
+        max_samples: int = 10,
+        custom_question: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Run RAG VQA on dataset samples for evaluation.
+
+        For each sample, uses the sample's image as the query image
+        and runs the full retrieve → context → generate pipeline.
+
+        Args:
+            dataset:         Loaded dataset.
+            sample_indices:  Specific indices to evaluate.
+            max_samples:     Cap on samples (if indices not given).
+            custom_question: Override question for all samples.
+
+        Returns:
+            List of result dicts.
+        """
+        if sample_indices is None:
+            sample_indices = list(range(min(max_samples, len(dataset))))
+
+        logger.info(f"Running RAG evaluation on {len(sample_indices)} samples")
+        results = []
+
+        for i, idx in enumerate(sample_indices):
+            sample = dataset[idx]
+            logger.info(
+                f"\n  [{i+1}/{len(sample_indices)}] Sample: {sample.sample_id}"
+            )
+
+            if sample.image is None:
+                logger.warning(f"  Skipping {sample.sample_id}: no image")
+                continue
+
+            question = custom_question or sample.question
+            image = self.preprocessor(sample.image)
+
+            try:
+                output = self.generator.generate(
+                    query=question,
+                    query_image=image,
+                    top_k=self.top_k,
+                )
+
+                result = {
+                    "sample_id": sample.sample_id,
+                    "image_path": sample.image_path,
+                    "question": question,
+                    "generated_answer": output.answer,
+                    "ground_truth": sample.answer,
+                    "num_retrieved": len(output.retrieved_docs),
+                    "retrieved_doc_ids": [
+                        d.doc_id for d in output.retrieved_docs
+                    ],
+                    "retrieved_scores": [
+                        d.score for d in output.retrieved_docs
+                    ],
+                    "retrieval_time_sec": output.retrieval_time_sec,
+                    "generation_time_sec": output.generation_time_sec,
+                    "total_time_sec": output.total_time_sec,
+                }
+                results.append(result)
+
+                logger.info(f"  Question:  {question}")
+                logger.info(f"  Answer:    {output.answer[:200]}...")
+                logger.info(
+                    f"  Retrieved: {[d.doc_id for d in output.retrieved_docs]}"
+                )
+                logger.info(f"  Time:      {output.total_time_sec}s")
+
+            except Exception as e:
+                logger.error(f"  Error on {sample.sample_id}: {e}")
+                results.append({
+                    "sample_id": sample.sample_id,
+                    "error": str(e),
+                })
+
+        # Save results
+        self._save_results(results, prefix="rag_eval")
+        return results
+
+    # ------------------------------------------------------------------ #
+    #  Save results                                                        #
+    # ------------------------------------------------------------------ #
+
+    def _save_results(
+        self,
+        results: List[Dict[str, Any]],
+        prefix: str = "rag_results",
+    ) -> None:
+        """Save results to a timestamped JSON file."""
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        out_path = self.output_dir / f"{prefix}_{timestamp}.json"
+
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(results, f, indent=2, ensure_ascii=False, default=str)
+
+        logger.info(f"Results saved to: {out_path}")
+
+
+# ------------------------------------------------------------------ #
+#  CLI entry point                                                     #
+# ------------------------------------------------------------------ #
+
+def main():
+    """Run the RAG VQA pipeline from command line."""
+    import argparse
+    import yaml
+    from src.generation.model_factory import create_model
+    from src.utils.device import print_gpu_status
+
+    parser = argparse.ArgumentParser(
+        description="Phase 2: RAG-augmented VQA Pipeline"
+    )
+    parser.add_argument(
+        "--model-config",
+        default="configs/model_config.yaml",
+        help="Path to model config YAML",
+    )
+    parser.add_argument(
+        "--retrieval-config",
+        default="configs/retrieval_config.yaml",
+        help="Path to retrieval config YAML",
+    )
+    parser.add_argument(
+        "--data-config",
+        default="configs/data_config.yaml",
+        help="Path to data config YAML",
+    )
+    parser.add_argument(
+        "--index-dir",
+        default="data/indexes/colqwen2_index",
+        help="Path to saved ColQwen2 index",
+    )
+    parser.add_argument(
+        "--query",
+        type=str,
+        default=None,
+        help="Text query for single-query mode",
+    )
+    parser.add_argument(
+        "--query-image",
+        type=str,
+        default=None,
+        help="Path to query image (for image+text query mode)",
+    )
+    parser.add_argument(
+        "--eval",
+        action="store_true",
+        help="Run evaluation on dataset samples",
+    )
+    parser.add_argument(
+        "--max-samples",
+        type=int,
+        default=5,
+        help="Max samples for evaluation mode",
+    )
+    parser.add_argument(
+        "--top-k",
+        type=int,
+        default=3,
+        help="Number of documents to retrieve",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="outputs/rag_results",
+        help="Directory for saving results",
+    )
+    args = parser.parse_args()
+
+    # Print GPU status
+    print_gpu_status()
+
+    # Load configs
+    with open(args.model_config) as f:
+        model_config = yaml.safe_load(f)
+    with open(args.retrieval_config) as f:
+        retrieval_config = yaml.safe_load(f)
+
+    # Load LLaVA model
+    logger.info("Loading LLaVA model...")
+    model = create_model(model_config)
+    model.load(model_config)
+
+    pipeline = RAGVQAPipeline(
+        vlm=model,
+        retrieval_config=retrieval_config,
+        index_dir=args.index_dir,
+        top_k=args.top_k,
+        max_context_chars=3000,
+        max_evidence_chars=800,
+        output_dir=args.output_dir,
+    )
+
+    if args.query:
+        # Single query mode
+        output = pipeline.run_single(
+            query=args.query,
+            query_image_path=args.query_image,
+        )
+
+        print("\n" + "=" * 60)
+        print("RAG VQA Result")
+        print("=" * 60)
+        print(f"Query:    {args.query}")
+        print(f"Answer:   {output.answer}")
+        print(f"\nRetrieved {len(output.retrieved_docs)} documents:")
+        for doc in output.retrieved_docs:
+            print(f"  [{doc.metadata.get('rank', '?')}] {doc.doc_id} "
+                  f"(score: {doc.score:.4f})")
+        print(f"\nRetrieval time: {output.retrieval_time_sec}s")
+        print(f"Generation time: {output.generation_time_sec}s")
+        print(f"Total time: {output.total_time_sec}s")
+        print("=" * 60)
+
+    elif args.eval:
+        # Evaluation mode
+        with open(args.data_config) as f:
+            data_config = yaml.safe_load(f)
+
+        from src.ingestion.dicom_loader import OpenIDataset
+        ds_cfg = data_config["dataset"]
+        dataset = OpenIDataset(
+            images_dir=ds_cfg["images_dir"],
+            reports_dir=ds_cfg["reports_dir"],
+            max_samples=args.max_samples,
+        )
+        dataset.load()
+
+        results = pipeline.run_eval(
+            dataset=dataset,
+            max_samples=args.max_samples,
+        )
+
+        logger.info(f"Evaluation complete: {len(results)} results")
+
+    else:
+        print("Specify --query for single query or --eval for evaluation.")
+        print("Examples:")
+        print('  python -m pipelines.rag_vqa --query "What abnormalities are visible?"')
+        print('  python -m pipelines.rag_vqa --query "Describe findings" --query-image image.png')
+        print("  python -m pipelines.rag_vqa --eval --max-samples 5")
+
+
+if __name__ == "__main__":
+    main()
