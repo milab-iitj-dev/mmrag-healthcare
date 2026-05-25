@@ -1,1 +1,1 @@
-# Pipelines — end-to-end orchestrators
+# Pipelines - end-to-end orchestrators

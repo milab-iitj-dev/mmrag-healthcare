@@ -56,6 +56,8 @@ def main():
     try:
         with open(args.model_config) as f: mc = yaml.safe_load(f)
         with open(args.data_config) as f:  dc = yaml.safe_load(f)
+        from src.utils.config_loader import resolve_data_paths
+        dc = resolve_data_paths(dc)
         record("configs_load", check("Configs load", True))
     except Exception as e:
         record("configs_load", check("Configs load", False, str(e)))

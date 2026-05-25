@@ -89,6 +89,9 @@ def main():
     if not info["cuda_available"]:
         logger.error("No GPU. QLoRA requires CUDA."); sys.exit(1)
 
+    from src.utils.config_loader import resolve_data_paths
+    data_config = resolve_data_paths(data_config)
+
     ds = data_config["dataset"]
     dataset = OpenIDataset(ds["images_dir"], ds["reports_dir"], ds.get("max_samples"))
     dataset.load()

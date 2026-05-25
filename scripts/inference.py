@@ -273,6 +273,8 @@ def main():
     elif args.batch_eval:
         with open(args.data_config) as f:
             data_config = yaml.safe_load(f)
+        from src.utils.config_loader import resolve_data_paths
+        data_config = resolve_data_paths(data_config)
         run_batch_eval(model_wrapper, data_config, args.max_samples)
     else:
         # Interactive

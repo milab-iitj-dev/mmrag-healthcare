@@ -5,7 +5,13 @@ Provides device detection, VRAM reporting, and environment diagnostics.
 Used by every module that touches the GPU to ensure consistent device placement.
 """
 
-import torch
+try:
+    import torch
+    _TORCH_AVAILABLE = True
+except ImportError:
+    torch = None
+    _TORCH_AVAILABLE = False
+
 import platform
 import sys
 from typing import Dict, Any
@@ -21,14 +27,14 @@ def get_device_info() -> Dict[str, Any]:
     info = {
         "python_version": sys.version.split()[0],
         "platform": platform.system(),
-        "torch_version": torch.__version__,
-        "cuda_available": torch.cuda.is_available(),
+        "torch_version": torch.__version__ if _TORCH_AVAILABLE else "not installed",
+        "cuda_available": torch.cuda.is_available() if _TORCH_AVAILABLE else False,
         "cuda_version": None,
         "gpu_count": 0,
         "gpus": [],
     }
 
-    if torch.cuda.is_available():
+    if _TORCH_AVAILABLE and torch.cuda.is_available():
         info["cuda_version"] = torch.version.cuda
         info["gpu_count"] = torch.cuda.device_count()
         for i in range(torch.cuda.device_count()):
@@ -84,7 +90,7 @@ def print_gpu_status(logger=None):
     return info
 
 
-def get_device(preference: str = "auto") -> torch.device:
+def get_device(preference: str = "auto") -> "torch.device":
     """
     Resolve a device preference string to a torch.device.
 
@@ -94,6 +100,8 @@ def get_device(preference: str = "auto") -> torch.device:
     Returns:
         torch.device for model placement.
     """
+    if not _TORCH_AVAILABLE:
+        raise RuntimeError("PyTorch is not installed. Install it: pip install torch")
     if preference == "auto":
         return torch.device("cuda" if torch.cuda.is_available() else "cpu")
     return torch.device(preference)
@@ -101,7 +109,7 @@ def get_device(preference: str = "auto") -> torch.device:
 
 def get_vram_usage_gb(device_index: int = 0) -> Dict[str, float]:
     """Get current VRAM usage in GB for a specific GPU."""
-    if not torch.cuda.is_available():
+    if not _TORCH_AVAILABLE or not torch.cuda.is_available():
         return {"allocated": 0.0, "reserved": 0.0, "total": 0.0}
     return {
         "allocated": round(torch.cuda.memory_allocated(device_index) / 1e9, 2),

@@ -183,6 +183,10 @@ def main():
     with open(args.retrieval_config) as f:
         retrieval_config = yaml.safe_load(f)
 
+    # Resolve relative data paths to project root
+    from src.utils.config_loader import resolve_data_paths
+    data_config = resolve_data_paths(data_config)
+
     # Run pipeline
     pipeline = OfflineIndexingPipeline(
         data_config=data_config,

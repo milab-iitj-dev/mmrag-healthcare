@@ -1,30 +1,55 @@
-# Healthcare Multimodal RAG — Dependencies
+# ============================================================
+# Healthcare MRAG — Full Project Dependencies
+# ============================================================
 
-# Core ML
-torch>=2.0.0
-torchvision>=0.15.0
-transformers>=4.46.0
-accelerate>=0.25.0
+# ── Phase 1: Core ──────────────────────────────────────────
+# PyTorch
+torch>=2.1.0
+torchvision>=0.16.0
 
-# Quantization & LoRA
-bitsandbytes>=0.41.0
-peft>=0.7.0
+# Hugging Face
+transformers>=4.46.0                     # >=4.46 for native ColQwen2 support
+accelerate>=0.27.0
+peft>=0.10.0
 
-# ColQwen2 / ColPali
-colpali-engine>=0.3.0
+# Quantization
+bitsandbytes>=0.43.0
 
-# Image processing
+# Image
 Pillow>=10.0.0
-opencv-python>=4.8.0
 
-# Data & configs
+# Config
 PyYAML>=6.0
-pandas>=2.0.0
-
-# Evaluation
-nltk>=3.8.0
-rouge-score>=0.1.2
 
 # Utilities
 tqdm>=4.65.0
-colorama>=0.4.6
+
+# ── Phase 2: ColQwen2 Retrieval ──────────────────────────
+colpali-engine>=0.3.0                    # ColQwen2 model weights + compatibility
+
+# ── Phase 2: Evaluation ─────────────────────────────────
+# (uncomment when implementing evaluation)
+# nltk>=3.8.0
+# rouge-score>=0.1.2
+# bert-score>=0.3.13
+# sacrebleu>=2.3.0
+
+# ── Phase 3: BM25 Retrieval ───────────────────────────────
+# (uncomment when implementing Phase 3)
+# rank-bm25>=0.2.2
+
+# ── Phase 3+: Dense Retrieval & Reranking ────────────────
+# (uncomment when implementing Phase 3+)
+# faiss-cpu>=1.7.4             # or faiss-gpu
+# open-clip-torch>=2.24.0
+# sentence-transformers>=2.6.0 # cross-encoder reranking
+
+# ── Phase 5: Grounding & Safety ──────────────────────────
+# (uncomment when implementing Phase 5)
+# qwen-vl-utils>=0.0.2
+
+# ── Development / Testing ────────────────────────────────
+# pytest>=8.0.0
+# pytest-cov>=4.1.0
+# matplotlib>=3.8.0
+# seaborn>=0.13.0

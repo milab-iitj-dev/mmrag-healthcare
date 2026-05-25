@@ -1,15 +1,56 @@
 """
 Unified configuration loader.
 
-Loads and merges YAML config files into a single dictionary.
-All scripts and pipelines use this to load their configuration
-instead of reading YAML files directly.
-
-Implementation: Phase 1 (basic) → extended in later phases
+Loads YAML config files and resolves relative paths to be
+relative to the project root (the directory containing setup.py).
 """
 
-# TODO: Implement config loader
-# - load_config(): load a single YAML file → dict
-# - merge_configs(): merge multiple config dicts (later overrides earlier)
-# - validate_config(): check required keys are present
-# - Support environment variable overrides (e.g., DATA_DIR=/path)
+from pathlib import Path
+from typing import Dict, Any
+
+import yaml
+
+
+def get_project_root() -> Path:
+    """
+    Find the project root directory.
+
+    Walks up from this file until it finds setup.py.
+    Falls back to cwd if not found.
+    """
+    current = Path(__file__).resolve().parent
+    for _ in range(10):
+        if (current / "setup.py").exists():
+            return current
+        current = current.parent
+    return Path.cwd()
+
+
+def load_config(config_path: str) -> Dict[str, Any]:
+    """
+    Load a YAML config file.
+
+    If config_path is relative, it is resolved relative to the project root.
+    """
+    root = get_project_root()
+    path = Path(config_path)
+    if not path.is_absolute():
+        path = root / path
+    with open(path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+
+def resolve_data_paths(config: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Resolve relative data paths in a config dict to absolute paths.
+
+    Looks for 'images_dir' and 'reports_dir' keys inside config['dataset']
+    and makes them absolute relative to the project root.
+    """
+    root = get_project_root()
+    if "dataset" in config:
+        ds = config["dataset"]
+        for key in ("images_dir", "reports_dir"):
+            if key in ds and not Path(ds[key]).is_absolute():
+                ds[key] = str(root / ds[key])
+    return config

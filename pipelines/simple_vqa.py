@@ -178,6 +178,10 @@ def main():
     with open(args.data_config) as f:
         data_config = yaml.safe_load(f)
 
+    # Resolve relative data paths to project root
+    from src.utils.config_loader import resolve_data_paths
+    data_config = resolve_data_paths(data_config)
+
     # Load dataset
     ds_cfg = data_config["dataset"]
     dataset = OpenIDataset(
