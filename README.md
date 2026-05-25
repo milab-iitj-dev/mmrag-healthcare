@@ -52,8 +52,8 @@ A modular system for medical image understanding that combines vision-language m
 ### Installation
 
 ```bash
-git clone https://github.com/<your-org>/healthcare-mrag.git
-cd healthcare-mrag
+git clone https://github.com/milab-iitj-dev/mmrag-healthcare.git
+cd mmrag-healthcare
 pip install -e .
 ```
 
