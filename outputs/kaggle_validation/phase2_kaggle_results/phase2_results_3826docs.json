@@ -1,0 +1,261 @@
+{
+  "summary": {
+    "phase": "Phase 2 - ColQwen2 Retrieval + LLaVA Generation",
+    "total_queries": 3,
+    "successful": 3,
+    "text_only": 0,
+    "image_text": 3,
+    "avg_retrieval_time": 5.8,
+    "avg_generation_time": 7.53,
+    "avg_total_time": 13.33,
+    "top_k": 3,
+    "index_size": 3826,
+    "colqwen2_model": "vidore/colqwen2-v1.0-hf",
+    "llava_model": "llava-hf/llava-1.5-7b-hf",
+    "vram_gb": 8.58,
+    "gpu": "Tesla T4",
+    "timestamp": "2026-05-22T02:15:42.126316"
+  },
+  "build_meta": {
+    "build_timestamp": "2026-05-22T02:12:06.888544",
+    "model": "vidore/colqwen2-v1.0-hf",
+    "num_indexed": 3826,
+    "num_skipped": 0,
+    "build_time_seconds": 14734.65,
+    "embedding_dim": 128,
+    "avg_seq_len": 753.3,
+    "chunk_size": 100,
+    "total_chunks": 39
+  },
+  "results": [
+    {
+      "query": "What are the key findings in this chest X-ray?",
+      "query_type": "image_text",
+      "answer": "Clear lung fields without bibasilar airspace disease or nodules. Heart size appears normal for age with mildly increased left atrial size which may be due to hypertension rather than congestive heart failure. Mediastinal contour also appears normal. Right lower lobe granulomas seen as well as some interstitial fibrosis. This could represent prior tuberculosis. Overall, there do not appear any significant radiographic abnormalities that would require further evaluation such as CT scan.",
+      "retrieved": [
+        {
+          "rank": 1,
+          "case_id": "1",
+          "score": 761.0,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/1_IM-0001-4001.dcm.png",
+          "findings": "The cardiac silhouette and mediastinum size are within normal limits. There is no pulmonary edema. There is no focal consolidation. There are no of a pleural effusion. There is no evidence of pneumothorax",
+          "impression": "Normal chest x-",
+          "report": "FINDINGS: The cardiac silhouette and mediastinum size are within normal limits. There is no pulmonary edema. There is no focal consolidation. There are no of a pleural effusion. There is no evidence of pneumothorax IMPRESSION: Normal chest x-",
+          "metadata": {
+            "mesh_terms": [
+              "normal"
+            ],
+            "problems": [
+              "normal"
+            ]
+          }
+        },
+        {
+          "rank": 2,
+          "case_id": "1785",
+          "score": 661.4942,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/1785_IM-0512-1001.dcm.png",
+          "findings": "Cardiac and mediastinal contours are within normal limits. Granulomatous calcifications in the paratracheal region. Mild streaky scarring in the right upper lobe. No active pneumonia. Bony structures are intact",
+          "impression": "No lobar pneumonia is present",
+          "report": "FINDINGS: Cardiac and mediastinal contours are within normal limits. Granulomatous calcifications in the paratracheal region. Mild streaky scarring in the right upper lobe. No active pneumonia. Bony structures are intact IMPRESSION: No lobar pneumonia is present",
+          "metadata": {
+            "mesh_terms": [
+              "Calcified Granuloma/paratracheal",
+              "Cicatrix/lung/upper lobe/right/streaky/mild"
+            ],
+            "problems": [
+              "Calcified Granuloma",
+              "Cicatrix"
+            ]
+          }
+        },
+        {
+          "rank": 3,
+          "case_id": "1738",
+          "score": 659.9733,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/1738_IM-0486-1001.dcm.png",
+          "findings": "Cardiac and mediastinal contours are within normal limits. Mild aortic tortuosity. The lungs are clear. Bony structures are intact",
+          "impression": "No acute findings",
+          "report": "FINDINGS: Cardiac and mediastinal contours are within normal limits. Mild aortic tortuosity. The lungs are clear. Bony structures are intact IMPRESSION: No acute findings",
+          "metadata": {
+            "mesh_terms": [
+              "Aorta/tortuous/mild"
+            ],
+            "problems": [
+              "Aorta"
+            ]
+          }
+        }
+      ],
+      "context_length": 1028,
+      "image_source": "query",
+      "retrieval_time_sec": 5.86,
+      "generation_time_sec": 13.84,
+      "total_time_sec": 19.7,
+      "input_tokens": 999,
+      "output_tokens": 108,
+      "query_id": 1,
+      "query_image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/1_IM-0001-4001.dcm.png"
+    },
+    {
+      "query": "Is there cardiomegaly or any cardiac abnormality?",
+      "query_type": "image_text",
+      "answer": "Normal heart size and medial contours. Clear lungs without active airspace disease. Stable findings compared to prior studies.",
+      "retrieved": [
+        {
+          "rank": 1,
+          "case_id": "4",
+          "score": 761.0,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/4_IM-2050-1001.dcm.png",
+          "findings": "There are diffuse bilateral interstitial and alveolar opacities consistent with chronic obstructive lung disease and bullous emphysema. There are irregular opacities in the left lung apex, that could represent a cavitary lesion in the left lung apex.There are streaky opacities in the right upper lobe, scarring. The cardiomediastinal silhouette is normal in size and contour. There is no pneumothorax or large pleural effusion",
+          "impression": "1. Bullous emphysema and interstitial fibrosis. 2. Probably scarring in the left apex, although difficult to exclude a cavitary lesion. 3. Opacities in the bilateral upper lobes could represent scarring, however the absence of comparison exam, recommend short interval followup radiograph or CT thorax to document resolution",
+          "report": "FINDINGS: There are diffuse bilateral interstitial and alveolar opacities consistent with chronic obstructive lung disease and bullous emphysema. There are irregular opacities in the left lung apex, that could represent a cavitary lesion in the left lung apex.There are streaky opacities in the right upper lobe, scarring. The cardiomediastinal silhouette is normal in size and contour. There is no pneumothorax or large pleural effusion IMPRESSION: 1. Bullous emphysema and interstitial fibrosis. 2. Probably scarring in the left apex, although difficult to exclude a cavitary lesion. 3. Opacities in the bilateral upper lobes could represent scarring, however the absence of comparison exam, recommend short interval followup radiograph or CT thorax to document resolution",
+          "metadata": {
+            "mesh_terms": [
+              "Pulmonary Disease, Chronic Obstructive",
+              "Bullous Emphysema",
+              "Pulmonary Fibrosis/interstitial",
+              "Cicatrix/lung/upper lobe/left",
+              "Opacity/lung/apex/left/irregular",
+              "Opacity/lung/upper lobe/right/streaky",
+              "Opacity/pulmonary alveoli",
+              "Opacity/lung/bilateral/interstitial/diffuse"
+            ],
+            "problems": [
+              "Pulmonary Disease, Chronic Obstructive",
+              "Bullous Emphysema",
+              "Pulmonary Fibrosis",
+              "Cicatrix",
+              "Opacity",
+              "Opacity",
+              "Opacity",
+              "Opacity"
+            ]
+          }
+        },
+        {
+          "rank": 2,
+          "case_id": "1689",
+          "score": 670.7937,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/1689_IM-0451-1001.dcm.png",
+          "findings": "Heart size and mediastinal contours appear within normal limits. Pulmonary vascularity is within normal limits. No focal consolidation, suspicious pulmonary opacity, pneumothorax or definite pleural effusion. Visualized osseous structures appear intact",
+          "impression": "No acute cardiopulmonary abnormality",
+          "report": "FINDINGS: Heart size and mediastinal contours appear within normal limits. Pulmonary vascularity is within normal limits. No focal consolidation, suspicious pulmonary opacity, pneumothorax or definite pleural effusion. Visualized osseous structures appear intact IMPRESSION: No acute cardiopulmonary abnormality",
+          "metadata": {
+            "mesh_terms": [
+              "normal"
+            ],
+            "problems": [
+              "normal"
+            ]
+          }
+        },
+        {
+          "rank": 3,
+          "case_id": "315",
+          "score": 670.7493,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/315_IM-1481-1001.dcm.png",
+          "findings": null,
+          "impression": "Heart size is normal. Lungs are clear. Old fusion of approximately T9-T10",
+          "report": "IMPRESSION: Heart size is normal. Lungs are clear. Old fusion of approximately T9-T10",
+          "metadata": {
+            "mesh_terms": [
+              "Spinal Fusion/thoracic vertebrae"
+            ],
+            "problems": [
+              "Spinal Fusion"
+            ]
+          }
+        }
+      ],
+      "context_length": 1614,
+      "image_source": "query",
+      "retrieval_time_sec": 5.76,
+      "generation_time_sec": 4.09,
+      "total_time_sec": 9.85,
+      "input_tokens": 1147,
+      "output_tokens": 28,
+      "query_id": 2,
+      "query_image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/4_IM-2050-1001.dcm.png"
+    },
+    {
+      "query": "Are there signs of pleural effusion or pneumonia?",
+      "query_type": "image_text",
+      "answer": "No evidence suggestive of pleuritis, pneumonitis, or edema. Normal chest X-ray appearance with no infiltrates.",
+      "retrieved": [
+        {
+          "rank": 1,
+          "case_id": "7",
+          "score": 740.0,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/7_IM-2263-1001.dcm.png",
+          "findings": "The cardiac contours are normal. basilar atelectasis. The lungs are clear. Thoracic spondylosis. Lower cervical arthritis",
+          "impression": "Basilar atelectasis. No confluent lobar consolidation or pleural effusion",
+          "report": "FINDINGS: The cardiac contours are normal. basilar atelectasis. The lungs are clear. Thoracic spondylosis. Lower cervical arthritis IMPRESSION: Basilar atelectasis. No confluent lobar consolidation or pleural effusion",
+          "metadata": {
+            "mesh_terms": [
+              "Pulmonary Atelectasis/base",
+              "Spondylosis/thoracic vertebrae",
+              "Arthritis/cervical vertebrae"
+            ],
+            "problems": [
+              "Pulmonary Atelectasis",
+              "Spondylosis",
+              "Arthritis"
+            ]
+          }
+        },
+        {
+          "rank": 2,
+          "case_id": "2140",
+          "score": 662.9229,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/2140_IM-0762-1001.dcm.png",
+          "findings": "The lungs are clear. There are calcified left hilar lymph . The heart and mediastinum are normal. The skeletal structures are notable for an old apparent fracture at T12-L1 or congenital fusion unchanged from the prior study",
+          "impression": "1. No acute pulmonary disease. 2. Possible old injury or developmental anomaly partially T12-L1",
+          "report": "FINDINGS: The lungs are clear. There are calcified left hilar lymph . The heart and mediastinum are normal. The skeletal structures are notable for an old apparent fracture at T12-L1 or congenital fusion unchanged from the prior study IMPRESSION: 1. No acute pulmonary disease. 2. Possible old injury or developmental anomaly partially T12-L1",
+          "metadata": {
+            "mesh_terms": [
+              "Calcinosis/lung/hilum/lymph nodes/left",
+              "Fractures, Bone/thoracic vertebrae",
+              "Fractures, Bone/lumbar vertebrae",
+              "Spinal Fusion/thoracic vertebrae",
+              "Spinal Fusion/lumbar vertebrae"
+            ],
+            "problems": [
+              "Calcinosis",
+              "Fractures, Bone",
+              "Fractures, Bone",
+              "Spinal Fusion",
+              "Spinal Fusion"
+            ]
+          }
+        },
+        {
+          "rank": 3,
+          "case_id": "3284",
+          "score": 662.0481,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/3284_IM-1565-20001.dcm.png",
+          "findings": "The heart size and pulmonary vascularity appear within normal limits. The lungs are free of focal airspace disease. No pleural effusion or pneumothorax is seen",
+          "impression": "1. No evidence of active disease",
+          "report": "FINDINGS: The heart size and pulmonary vascularity appear within normal limits. The lungs are free of focal airspace disease. No pleural effusion or pneumothorax is seen IMPRESSION: 1. No evidence of active disease",
+          "metadata": {
+            "mesh_terms": [
+              "normal"
+            ],
+            "problems": [
+              "normal"
+            ]
+          }
+        }
+      ],
+      "context_length": 1293,
+      "image_source": "query",
+      "retrieval_time_sec": 5.77,
+      "generation_time_sec": 4.66,
+      "total_time_sec": 10.44,
+      "input_tokens": 1095,
+      "output_tokens": 33,
+      "query_id": 3,
+      "query_image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/7_IM-2263-1001.dcm.png"
+    }
+  ]
+}

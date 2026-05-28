@@ -1,0 +1,681 @@
+2026-05-21 22:04:29,323 | INFO | ============================================================
+2026-05-21 22:04:29,324 | INFO | PHASE 2 VALIDATION (HARDENED)
+2026-05-21 22:04:29,325 | INFO | ColQwen2 Retrieval + LLaVA Generation on OpenI
+2026-05-21 22:04:29,326 | INFO | ============================================================
+2026-05-21 22:04:29,556 | INFO | GPU: Tesla T4 | VRAM: 15.6 GB
+2026-05-21 22:04:29,557 | INFO | PyTorch: 2.10.0+cu128 | CUDA: 12.8
+2026-05-21 22:04:29,682 | INFO | Dataset: /kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized (7470 images)
+2026-05-21 22:04:29,683 | INFO | Reports: /kaggle/input/datasets/raddar/chest-xrays-indiana-university/indiana_reports.csv
+2026-05-21 22:04:39,180 | INFO | LoRA Adapter: /kaggle/input/datasets/gokulfaleja/final-adapter
+2026-05-21 22:04:39,181 | INFO | 
+============================================================
+2026-05-21 22:04:39,182 | INFO | STAGE 1: Loading OpenI Dataset
+2026-05-21 22:04:39,183 | INFO | ============================================================
+2026-05-21 22:04:39,207 | INFO | Loaded projections for 3851 UIDs
+2026-05-21 22:05:56,400 | INFO | Loaded 3826 cases (skipped: 25 no text, 0 no image)
+2026-05-21 22:05:56,402 | INFO | Loaded 3826 medical cases
+2026-05-21 22:05:56,403 | INFO | 
+============================================================
+2026-05-21 22:05:56,404 | INFO | STAGE 2: Building ColQwen2 Index (Offline)
+2026-05-21 22:05:56,404 | INFO | ============================================================
+2026-05-21 22:06:04,613 | INFO | NumExpr defaulting to 4 threads.
+2026-05-21 22:06:07,313 | INFO | Loading ColQwen2: vidore/colqwen2-v1.0-hf
+2026-05-21 22:06:07,314 | INFO |   VRAM before load: 0.0 GB
+2026-05-21 22:06:07,423 | INFO | HTTP Request: GET https://huggingface.co/api/models/vidore/colqwen2-v1.0-hf/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-05-21 22:06:07,487 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-05-21 22:06:07,542 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/chat_template.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-21 22:06:07,584 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/chat_template.json "HTTP/1.1 200 OK"
+2026-05-21 22:06:07,630 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/chat_template.json "HTTP/1.1 200 OK"
+2026-05-21 22:06:07,699 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/chat_template.jinja "HTTP/1.1 404 Not Found"
+2026-05-21 22:06:07,758 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/audio_tokenizer_config.json "HTTP/1.1 404 Not Found"
+2026-05-21 22:06:07,812 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-05-21 22:06:07,873 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/preprocessor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-21 22:06:07,914 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/preprocessor_config.json "HTTP/1.1 200 OK"
+2026-05-21 22:06:07,958 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/preprocessor_config.json "HTTP/1.1 200 OK"
+2026-05-21 22:06:08,040 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-05-21 22:06:08,116 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/preprocessor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-21 22:06:08,133 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/preprocessor_config.json "HTTP/1.1 200 OK"
+2026-05-21 22:06:08,187 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-21 22:06:08,231 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/config.json "HTTP/1.1 200 OK"
+2026-05-21 22:06:08,283 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/config.json "HTTP/1.1 200 OK"
+2026-05-21 22:06:08,401 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-21 22:06:08,443 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-05-21 22:06:08,485 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-05-21 22:06:08,558 | INFO | HTTP Request: GET https://huggingface.co/api/models/vidore/colqwen2-v1.0-hf/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-05-21 22:06:08,619 | INFO | HTTP Request: GET https://huggingface.co/api/models/vidore/colqwen2-v1.0-hf/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-05-21 22:06:08,683 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/vocab.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-21 22:06:08,724 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/vocab.json "HTTP/1.1 200 OK"
+2026-05-21 22:06:08,770 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/vocab.json "HTTP/1.1 200 OK"
+2026-05-21 22:06:08,910 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/merges.txt "HTTP/1.1 404 Not Found"
+2026-05-21 22:06:08,967 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/tokenizer.json "HTTP/1.1 302 Found"
+2026-05-21 22:06:09,024 | INFO | HTTP Request: GET https://huggingface.co/api/models/vidore/colqwen2-v1.0-hf/xet-read-token/0d3e414967fde994dd99a0ccc29bcb34b5355712 "HTTP/1.1 200 OK"
+2026-05-21 22:06:09,704 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/added_tokens.json "HTTP/1.1 404 Not Found"
+2026-05-21 22:06:09,772 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/special_tokens_map.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-21 22:06:09,814 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/special_tokens_map.json "HTTP/1.1 200 OK"
+2026-05-21 22:06:09,859 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/special_tokens_map.json "HTTP/1.1 200 OK"
+2026-05-21 22:06:10,841 | INFO | HTTP Request: GET https://huggingface.co/api/models/vidore/colqwen2-v1.0-hf "HTTP/1.1 200 OK"
+2026-05-21 22:06:10,845 | INFO |   Processor loaded
+2026-05-21 22:06:10,897 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-21 22:06:10,915 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/config.json "HTTP/1.1 200 OK"
+2026-05-21 22:06:10,972 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
+2026-05-21 22:06:11,027 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-21 22:06:11,045 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/config.json "HTTP/1.1 200 OK"
+2026-05-21 22:06:11,153 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/model.safetensors "HTTP/1.1 302 Found"
+2026-05-21 22:06:32,233 | INFO |   Model loaded on cuda:0
+2026-05-21 22:06:32,234 | INFO |   VRAM after load: 4.42 GB (free: 11.22 GB)
+2026-05-21 22:06:32,235 | INFO | ============================================================
+2026-05-21 22:06:32,236 | INFO | OFFLINE STAGE: Building ColQwen2 Index (Chunked/Resumable)
+2026-05-21 22:06:32,237 | INFO | ============================================================
+2026-05-21 22:06:32,238 | INFO | Step 1: Validating case image paths...
+2026-05-21 22:06:34,341 | INFO |   3826 / 3826 cases have valid image paths
+2026-05-21 22:06:34,342 | INFO |   Total chunks needed: 39  (CHUNK_SIZE=100)
+2026-05-21 22:06:34,343 | INFO | 
+  ── Chunk 1/39 (cases 1..100) ──
+2026-05-21 22:06:34,344 | INFO |   VRAM: 4.42 GB used, 11.22 GB free
+2026-05-21 22:07:45,373 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:09:00,842 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:10:18,000 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:11:34,840 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:12:52,047 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:12:52,102 | INFO |   ✓ Chunk 1 saved: 100 embeddings → chunk_0.pt
+2026-05-21 22:12:52,623 | INFO | 
+  ── Chunk 2/39 (cases 101..200) ──
+2026-05-21 22:12:52,625 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-21 22:14:09,353 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:15:26,126 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:16:43,422 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:17:59,958 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:19:16,488 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:19:16,529 | INFO |   ✓ Chunk 2 saved: 100 embeddings → chunk_1.pt
+2026-05-21 22:19:17,015 | INFO | 
+  ── Chunk 3/39 (cases 201..300) ──
+2026-05-21 22:19:17,017 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-21 22:20:33,921 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:21:51,256 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:23:07,821 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:24:24,754 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:25:41,344 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:25:41,384 | INFO |   ✓ Chunk 3 saved: 100 embeddings → chunk_2.pt
+2026-05-21 22:25:41,901 | INFO | 
+  ── Chunk 4/39 (cases 301..400) ──
+2026-05-21 22:25:41,903 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-21 22:26:58,610 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:28:15,207 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:29:32,183 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:30:49,007 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:32:05,962 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:32:06,005 | INFO |   ✓ Chunk 4 saved: 100 embeddings → chunk_3.pt
+2026-05-21 22:32:06,497 | INFO | 
+  ── Chunk 5/39 (cases 401..500) ──
+2026-05-21 22:32:06,498 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-21 22:33:23,145 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:34:40,750 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:35:57,362 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:37:14,274 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:38:31,234 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:38:31,277 | INFO |   ✓ Chunk 5 saved: 100 embeddings → chunk_4.pt
+2026-05-21 22:38:31,772 | INFO | 
+  ── Chunk 6/39 (cases 501..600) ──
+2026-05-21 22:38:31,773 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-21 22:39:49,035 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:41:05,869 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:42:22,663 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:43:39,608 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:44:56,224 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:44:56,264 | INFO |   ✓ Chunk 6 saved: 100 embeddings → chunk_5.pt
+2026-05-21 22:44:56,777 | INFO | 
+  ── Chunk 7/39 (cases 601..700) ──
+2026-05-21 22:44:56,778 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-21 22:46:13,202 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:47:29,942 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:48:46,698 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:50:03,441 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:51:20,540 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:51:20,581 | INFO |   ✓ Chunk 7 saved: 100 embeddings → chunk_6.pt
+2026-05-21 22:51:21,105 | INFO | 
+  ── Chunk 8/39 (cases 701..800) ──
+2026-05-21 22:51:21,106 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-21 22:52:38,491 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:53:55,029 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:55:11,907 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:56:28,854 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:57:45,489 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-21 22:57:45,528 | INFO |   ✓ Chunk 8 saved: 100 embeddings → chunk_7.pt
+2026-05-21 22:57:46,035 | INFO | 
+  ── Chunk 9/39 (cases 801..900) ──
+2026-05-21 22:57:46,036 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-21 22:59:02,725 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:00:19,720 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:01:36,289 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:02:53,193 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:04:09,769 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:04:09,809 | INFO |   ✓ Chunk 9 saved: 100 embeddings → chunk_8.pt
+2026-05-21 23:04:10,319 | INFO | 
+  ── Chunk 10/39 (cases 901..1000) ──
+2026-05-21 23:04:10,321 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-21 23:05:27,665 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:06:44,601 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:08:02,083 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:09:18,776 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:10:35,764 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:10:35,805 | INFO |   ✓ Chunk 10 saved: 100 embeddings → chunk_9.pt
+2026-05-21 23:10:36,301 | INFO | 
+  ── Chunk 11/39 (cases 1001..1100) ──
+2026-05-21 23:10:36,302 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-21 23:11:53,305 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:13:10,136 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:14:27,418 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:15:44,271 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:17:01,147 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:17:01,185 | INFO |   ✓ Chunk 11 saved: 100 embeddings → chunk_10.pt
+2026-05-21 23:17:01,668 | INFO | 
+  ── Chunk 12/39 (cases 1101..1200) ──
+2026-05-21 23:17:01,670 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-21 23:18:18,615 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:19:35,278 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:20:52,258 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:22:08,987 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:23:26,149 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:23:26,191 | INFO |   ✓ Chunk 12 saved: 100 embeddings → chunk_11.pt
+2026-05-21 23:23:26,702 | INFO | 
+  ── Chunk 13/39 (cases 1201..1300) ──
+2026-05-21 23:23:26,703 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-21 23:24:43,487 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:25:59,713 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:27:16,470 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:28:33,331 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:29:50,502 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:29:50,542 | INFO |   ✓ Chunk 13 saved: 100 embeddings → chunk_12.pt
+2026-05-21 23:29:51,054 | INFO | 
+  ── Chunk 14/39 (cases 1301..1400) ──
+2026-05-21 23:29:51,055 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-21 23:31:08,293 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:32:24,845 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:33:42,417 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:34:59,085 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:36:16,091 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:36:16,131 | INFO |   ✓ Chunk 14 saved: 100 embeddings → chunk_13.pt
+2026-05-21 23:36:16,654 | INFO | 
+  ── Chunk 15/39 (cases 1401..1500) ──
+2026-05-21 23:36:16,656 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-21 23:37:33,174 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:38:50,105 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:40:07,590 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:41:24,876 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:42:42,226 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:42:42,274 | INFO |   ✓ Chunk 15 saved: 100 embeddings → chunk_14.pt
+2026-05-21 23:42:42,787 | INFO | 
+  ── Chunk 16/39 (cases 1501..1600) ──
+2026-05-21 23:42:42,789 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-21 23:43:59,711 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:45:16,714 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:46:33,593 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:47:50,278 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:49:07,528 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:49:07,568 | INFO |   ✓ Chunk 16 saved: 100 embeddings → chunk_15.pt
+2026-05-21 23:49:08,100 | INFO | 
+  ── Chunk 17/39 (cases 1601..1700) ──
+2026-05-21 23:49:08,101 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-21 23:50:24,360 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:51:41,514 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:52:58,343 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:54:15,104 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:55:31,868 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:55:31,909 | INFO |   ✓ Chunk 17 saved: 100 embeddings → chunk_16.pt
+2026-05-21 23:55:32,440 | INFO | 
+  ── Chunk 18/39 (cases 1701..1800) ──
+2026-05-21 23:55:32,442 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-21 23:56:48,927 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:58:05,597 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-21 23:59:22,465 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:00:39,139 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:01:56,298 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:01:56,338 | INFO |   ✓ Chunk 18 saved: 100 embeddings → chunk_17.pt
+2026-05-22 00:01:56,842 | INFO | 
+  ── Chunk 19/39 (cases 1801..1900) ──
+2026-05-22 00:01:56,843 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 00:03:13,522 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:04:29,807 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:05:46,293 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:07:02,519 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:08:19,523 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:08:19,564 | INFO |   ✓ Chunk 19 saved: 100 embeddings → chunk_18.pt
+2026-05-22 00:08:20,098 | INFO | 
+  ── Chunk 20/39 (cases 1901..2000) ──
+2026-05-22 00:08:20,099 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 00:09:37,515 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:10:54,189 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:12:11,253 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:13:28,433 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:14:45,567 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:14:45,607 | INFO |   ✓ Chunk 20 saved: 100 embeddings → chunk_19.pt
+2026-05-22 00:14:46,109 | INFO | 
+  ── Chunk 21/39 (cases 2001..2100) ──
+2026-05-22 00:14:46,111 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 00:16:02,309 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:17:18,811 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:18:36,102 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:19:53,070 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:21:09,948 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:21:09,989 | INFO |   ✓ Chunk 21 saved: 100 embeddings → chunk_20.pt
+2026-05-22 00:21:10,500 | INFO | 
+  ── Chunk 22/39 (cases 2101..2200) ──
+2026-05-22 00:21:10,501 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 00:22:27,322 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:23:44,119 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:25:00,929 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:26:17,515 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:27:34,427 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:27:34,465 | INFO |   ✓ Chunk 22 saved: 100 embeddings → chunk_21.pt
+2026-05-22 00:27:34,971 | INFO | 
+  ── Chunk 23/39 (cases 2201..2300) ──
+2026-05-22 00:27:34,972 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 00:28:52,116 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:30:09,009 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:31:25,645 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:32:42,526 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:33:59,070 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:33:59,108 | INFO |   ✓ Chunk 23 saved: 100 embeddings → chunk_22.pt
+2026-05-22 00:33:59,590 | INFO | 
+  ── Chunk 24/39 (cases 2301..2400) ──
+2026-05-22 00:33:59,591 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 00:35:16,347 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:36:33,497 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:37:50,510 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:39:07,302 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:40:24,774 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:40:24,814 | INFO |   ✓ Chunk 24 saved: 100 embeddings → chunk_23.pt
+2026-05-22 00:40:25,280 | INFO | 
+  ── Chunk 25/39 (cases 2401..2500) ──
+2026-05-22 00:40:25,281 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 00:41:41,658 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:42:58,143 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:44:14,897 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:45:31,608 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:46:48,762 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:46:48,800 | INFO |   ✓ Chunk 25 saved: 100 embeddings → chunk_24.pt
+2026-05-22 00:46:49,272 | INFO | 
+  ── Chunk 26/39 (cases 2501..2600) ──
+2026-05-22 00:46:49,274 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 00:48:06,383 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:49:23,257 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:50:39,702 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:51:56,664 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:53:14,035 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:53:14,074 | INFO |   ✓ Chunk 26 saved: 100 embeddings → chunk_25.pt
+2026-05-22 00:53:14,587 | INFO | 
+  ── Chunk 27/39 (cases 2601..2700) ──
+2026-05-22 00:53:14,589 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 00:54:31,043 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:55:47,570 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:57:04,429 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:58:21,414 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:59:38,592 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 00:59:38,631 | INFO |   ✓ Chunk 27 saved: 100 embeddings → chunk_26.pt
+2026-05-22 00:59:39,136 | INFO | 
+  ── Chunk 28/39 (cases 2701..2800) ──
+2026-05-22 00:59:39,137 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 01:00:55,783 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:02:12,963 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:03:29,702 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:04:46,481 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:06:03,519 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:06:03,558 | INFO |   ✓ Chunk 28 saved: 100 embeddings → chunk_27.pt
+2026-05-22 01:06:04,053 | INFO | 
+  ── Chunk 29/39 (cases 2801..2900) ──
+2026-05-22 01:06:04,054 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 01:07:21,104 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:08:37,874 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:09:54,929 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:11:11,542 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:12:29,124 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:12:29,164 | INFO |   ✓ Chunk 29 saved: 100 embeddings → chunk_28.pt
+2026-05-22 01:12:29,659 | INFO | 
+  ── Chunk 30/39 (cases 2901..3000) ──
+2026-05-22 01:12:29,661 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 01:13:46,137 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:15:02,568 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:16:18,934 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:17:35,206 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:18:52,114 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:18:52,154 | INFO |   ✓ Chunk 30 saved: 100 embeddings → chunk_29.pt
+2026-05-22 01:18:52,680 | INFO | 
+  ── Chunk 31/39 (cases 3001..3100) ──
+2026-05-22 01:18:52,681 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 01:20:09,905 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:21:26,847 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:22:43,996 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:24:00,199 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:25:16,573 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:25:16,614 | INFO |   ✓ Chunk 31 saved: 100 embeddings → chunk_30.pt
+2026-05-22 01:25:17,123 | INFO | 
+  ── Chunk 32/39 (cases 3101..3200) ──
+2026-05-22 01:25:17,125 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 01:26:34,250 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:27:51,618 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:29:08,816 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:30:25,055 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:31:41,894 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:31:41,934 | INFO |   ✓ Chunk 32 saved: 100 embeddings → chunk_31.pt
+2026-05-22 01:31:42,452 | INFO | 
+  ── Chunk 33/39 (cases 3201..3300) ──
+2026-05-22 01:31:42,454 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 01:32:59,387 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:34:16,432 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:35:33,184 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:36:50,690 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:38:07,656 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:38:07,693 | INFO |   ✓ Chunk 33 saved: 100 embeddings → chunk_32.pt
+2026-05-22 01:38:08,151 | INFO | 
+  ── Chunk 34/39 (cases 3301..3400) ──
+2026-05-22 01:38:08,152 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 01:39:25,462 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:40:41,942 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:41:58,944 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:43:15,793 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:44:33,367 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:44:33,409 | INFO |   ✓ Chunk 34 saved: 100 embeddings → chunk_33.pt
+2026-05-22 01:44:33,924 | INFO | 
+  ── Chunk 35/39 (cases 3401..3500) ──
+2026-05-22 01:44:33,925 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 01:45:50,665 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:47:07,396 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:48:24,223 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:49:40,837 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:50:57,407 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:50:57,448 | INFO |   ✓ Chunk 35 saved: 100 embeddings → chunk_34.pt
+2026-05-22 01:50:57,932 | INFO | 
+  ── Chunk 36/39 (cases 3501..3600) ──
+2026-05-22 01:50:57,933 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 01:52:14,981 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:53:32,039 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:54:48,635 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:56:05,262 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:57:22,064 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:57:22,103 | INFO |   ✓ Chunk 36 saved: 100 embeddings → chunk_35.pt
+2026-05-22 01:57:22,633 | INFO | 
+  ── Chunk 37/39 (cases 3601..3700) ──
+2026-05-22 01:57:22,634 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 01:58:39,956 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 01:59:57,311 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 02:01:13,812 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 02:02:31,034 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 02:03:48,216 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 02:03:48,257 | INFO |   ✓ Chunk 37 saved: 100 embeddings → chunk_36.pt
+2026-05-22 02:03:48,776 | INFO | 
+  ── Chunk 38/39 (cases 3701..3800) ──
+2026-05-22 02:03:48,778 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 02:05:05,000 | INFO |     20/100 images encoded | VRAM: 4.43 GB
+2026-05-22 02:06:22,340 | INFO |     40/100 images encoded | VRAM: 4.43 GB
+2026-05-22 02:07:39,368 | INFO |     60/100 images encoded | VRAM: 4.43 GB
+2026-05-22 02:08:55,953 | INFO |     80/100 images encoded | VRAM: 4.43 GB
+2026-05-22 02:10:13,100 | INFO |     100/100 images encoded | VRAM: 4.43 GB
+2026-05-22 02:10:13,141 | INFO |   ✓ Chunk 38 saved: 100 embeddings → chunk_37.pt
+2026-05-22 02:10:13,644 | INFO | 
+  ── Chunk 39/39 (cases 3801..3826) ──
+2026-05-22 02:10:13,646 | INFO |   VRAM: 4.43 GB used, 11.21 GB free
+2026-05-22 02:11:30,619 | INFO |     20/26 images encoded | VRAM: 4.43 GB
+2026-05-22 02:11:53,620 | INFO |     26/26 images encoded | VRAM: 4.43 GB
+2026-05-22 02:11:53,633 | INFO |   ✓ Chunk 39 saved: 26 embeddings → chunk_38.pt
+2026-05-22 02:11:54,131 | INFO | 
+============================================================
+2026-05-22 02:11:54,133 | INFO | Merging chunks into final index...
+2026-05-22 02:11:54,134 | INFO | ============================================================
+2026-05-22 02:11:54,407 | INFO |   Merged chunk 1/39 (total so far: 100)
+2026-05-22 02:11:54,678 | INFO |   Merged chunk 2/39 (total so far: 200)
+2026-05-22 02:11:54,949 | INFO |   Merged chunk 3/39 (total so far: 300)
+2026-05-22 02:11:55,225 | INFO |   Merged chunk 4/39 (total so far: 400)
+2026-05-22 02:11:55,501 | INFO |   Merged chunk 5/39 (total so far: 500)
+2026-05-22 02:11:55,772 | INFO |   Merged chunk 6/39 (total so far: 600)
+2026-05-22 02:11:56,060 | INFO |   Merged chunk 7/39 (total so far: 700)
+2026-05-22 02:11:56,350 | INFO |   Merged chunk 8/39 (total so far: 800)
+2026-05-22 02:11:56,639 | INFO |   Merged chunk 9/39 (total so far: 900)
+2026-05-22 02:11:56,926 | INFO |   Merged chunk 10/39 (total so far: 1000)
+2026-05-22 02:11:57,214 | INFO |   Merged chunk 11/39 (total so far: 1100)
+2026-05-22 02:11:57,506 | INFO |   Merged chunk 12/39 (total so far: 1200)
+2026-05-22 02:11:57,798 | INFO |   Merged chunk 13/39 (total so far: 1300)
+2026-05-22 02:11:58,087 | INFO |   Merged chunk 14/39 (total so far: 1400)
+2026-05-22 02:11:58,381 | INFO |   Merged chunk 15/39 (total so far: 1500)
+2026-05-22 02:11:58,676 | INFO |   Merged chunk 16/39 (total so far: 1600)
+2026-05-22 02:11:58,965 | INFO |   Merged chunk 17/39 (total so far: 1700)
+2026-05-22 02:11:59,257 | INFO |   Merged chunk 18/39 (total so far: 1800)
+2026-05-22 02:11:59,550 | INFO |   Merged chunk 19/39 (total so far: 1900)
+2026-05-22 02:11:59,839 | INFO |   Merged chunk 20/39 (total so far: 2000)
+2026-05-22 02:12:00,126 | INFO |   Merged chunk 21/39 (total so far: 2100)
+2026-05-22 02:12:00,413 | INFO |   Merged chunk 22/39 (total so far: 2200)
+2026-05-22 02:12:00,700 | INFO |   Merged chunk 23/39 (total so far: 2300)
+2026-05-22 02:12:00,988 | INFO |   Merged chunk 24/39 (total so far: 2400)
+2026-05-22 02:12:01,274 | INFO |   Merged chunk 25/39 (total so far: 2500)
+2026-05-22 02:12:01,564 | INFO |   Merged chunk 26/39 (total so far: 2600)
+2026-05-22 02:12:01,853 | INFO |   Merged chunk 27/39 (total so far: 2700)
+2026-05-22 02:12:02,146 | INFO |   Merged chunk 28/39 (total so far: 2800)
+2026-05-22 02:12:02,465 | INFO |   Merged chunk 29/39 (total so far: 2900)
+2026-05-22 02:12:02,758 | INFO |   Merged chunk 30/39 (total so far: 3000)
+2026-05-22 02:12:03,047 | INFO |   Merged chunk 31/39 (total so far: 3100)
+2026-05-22 02:12:03,337 | INFO |   Merged chunk 32/39 (total so far: 3200)
+2026-05-22 02:12:03,628 | INFO |   Merged chunk 33/39 (total so far: 3300)
+2026-05-22 02:12:03,915 | INFO |   Merged chunk 34/39 (total so far: 3400)
+2026-05-22 02:12:04,210 | INFO |   Merged chunk 35/39 (total so far: 3500)
+2026-05-22 02:12:04,506 | INFO |   Merged chunk 36/39 (total so far: 3600)
+2026-05-22 02:12:04,800 | INFO |   Merged chunk 37/39 (total so far: 3700)
+2026-05-22 02:12:05,093 | INFO |   Merged chunk 38/39 (total so far: 3800)
+2026-05-22 02:12:05,360 | INFO |   Merged chunk 39/39 (total so far: 3826)
+2026-05-22 02:12:05,361 | INFO |   Total embeddings merged: 3826
+2026-05-22 02:12:05,361 | INFO | Saving final consolidated index...
+2026-05-22 02:12:06,890 | INFO | 
+Index saved to /kaggle/working/colqwen2_index
+2026-05-22 02:12:06,890 | INFO |   Documents indexed: 3826
+2026-05-22 02:12:06,891 | INFO |   Skipped (invalid): 0
+2026-05-22 02:12:06,892 | INFO |   Embedding dim: 128
+2026-05-22 02:12:06,892 | INFO |   Avg seq length: 753.3
+2026-05-22 02:12:06,893 | INFO |   Chunks used: 39 x 100
+2026-05-22 02:12:06,894 | INFO |   Build time: 14734.7s (245.6 min)
+2026-05-22 02:12:06,896 | INFO | Index built: 3826 documents indexed
+2026-05-22 02:12:06,897 | INFO | 
+============================================================
+2026-05-22 02:12:06,897 | INFO | STAGE 3: Verifying Index Persistence
+2026-05-22 02:12:06,898 | INFO | ============================================================
+2026-05-22 02:12:06,899 | INFO |   embeddings.pt: OK (1,476,627,917 bytes)
+2026-05-22 02:12:06,900 | INFO |   doc_ids.json: OK (37,192 bytes)
+2026-05-22 02:12:06,900 | INFO |   document_store.json: OK (3,884,383 bytes)
+2026-05-22 02:12:06,901 | INFO |   index_metadata.json: OK (259 bytes)
+2026-05-22 02:12:08,291 | INFO |   Reload verified: 3826 embeddings
+2026-05-22 02:12:08,299 | INFO | 
+============================================================
+2026-05-22 02:12:08,300 | INFO | STAGE 4: Testing ColQwen2 Retrieval
+2026-05-22 02:12:08,301 | INFO | ============================================================
+2026-05-22 02:12:08,301 | INFO | 
+Test query (text-only): 'chest X-ray with cardiomegaly'
+2026-05-22 02:12:08,302 | INFO | Retrieval mode: text-only
+2026-05-22 02:12:08,775 | INFO |   MaxSim scoring: 1 queries x 3826 docs
+2026-05-22 02:12:10,204 | INFO |     Query 1/1 scored
+2026-05-22 02:12:10,208 | INFO |   Scores range: [9.59, 12.09]
+2026-05-22 02:12:10,479 | INFO | Retrieved 3 cases: [('79', 12.0933), ('3717', 11.9656), ('3753', 11.9356)]
+2026-05-22 02:12:10,480 | INFO |   [1] Case 79 (score: 12.0933)
+2026-05-22 02:12:10,481 | INFO |       Report: FINDINGS: The cardiomediastinal silhouette and vasculature are within normal limits for size and con...
+2026-05-22 02:12:10,482 | INFO |   [2] Case 3717 (score: 11.9656)
+2026-05-22 02:12:10,482 | INFO |       Report: FINDINGS: Low lung volumes. normal heart size. No pneumothorax. No large effusion. No focal infiltra...
+2026-05-22 02:12:10,483 | INFO |   [3] Case 3753 (score: 11.9356)
+2026-05-22 02:12:10,483 | INFO |       Report: FINDINGS: The cardiac silhouette, upper mediastinum and pulmonary vasculature are within normal limi...
+2026-05-22 02:12:10,533 | INFO | 
+Test query (image+text): 'What findings are visible in this image?'
+2026-05-22 02:12:10,534 | INFO | Retrieval mode: image + text
+2026-05-22 02:12:10,535 | WARNING | Joint image+text encoding failed, falling back to image-only
+2026-05-22 02:12:14,590 | INFO |   MaxSim scoring: 1 queries x 3826 docs
+2026-05-22 02:12:15,991 | INFO |     Query 1/1 scored
+2026-05-22 02:12:15,992 | INFO |   Scores range: [557.63, 761.00]
+2026-05-22 02:12:16,251 | INFO | Retrieved 3 cases: [('1', 761.0), ('1785', 661.4942), ('1738', 659.9733)]
+2026-05-22 02:12:16,252 | INFO |   [1] Case 1 (score: 761.0)
+2026-05-22 02:12:16,253 | INFO |   [2] Case 1785 (score: 661.4942)
+2026-05-22 02:12:16,253 | INFO |   [3] Case 1738 (score: 659.9733)
+2026-05-22 02:12:16,254 | INFO | 
+============================================================
+2026-05-22 02:12:16,255 | INFO | STAGE 5: Model Swap (ColQwen2 -> LLaVA)
+2026-05-22 02:12:16,256 | INFO | ============================================================
+2026-05-22 02:12:16,257 | INFO | VRAM before swap: 4.43 GB
+2026-05-22 02:12:16,257 | INFO |   Unloading ColQwen2 | VRAM before: 4.43 GB
+2026-05-22 02:12:16,591 | INFO |   ColQwen2 unloaded | VRAM after: 0.01 GB
+2026-05-22 02:12:16,839 | INFO | VRAM after ColQwen2 unload: 0.01 GB
+2026-05-22 02:12:16,853 | INFO | Loading LLaVA: llava-hf/llava-1.5-7b-hf
+2026-05-22 02:12:16,854 | INFO |   VRAM before: 0.01 GB
+2026-05-22 02:12:16,965 | INFO | HTTP Request: GET https://huggingface.co/api/models/llava-hf/llava-1.5-7b-hf/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-05-22 02:12:17,019 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:12:17,062 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/processor_config.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:17,104 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/processor_config.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:17,203 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/chat_template.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:12:17,245 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/chat_template.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:17,287 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/chat_template.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:17,355 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/chat_template.jinja "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:12:17,396 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/chat_template.jinja "HTTP/1.1 200 OK"
+2026-05-22 02:12:17,437 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/chat_template.jinja "HTTP/1.1 200 OK"
+2026-05-22 02:12:17,507 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/audio_tokenizer_config.json "HTTP/1.1 404 Not Found"
+2026-05-22 02:12:17,560 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:12:17,578 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/processor_config.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:17,631 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/preprocessor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:12:17,678 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/preprocessor_config.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:17,721 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/preprocessor_config.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:17,788 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:12:17,805 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/processor_config.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:17,861 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/preprocessor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:12:17,878 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/preprocessor_config.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:17,930 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:12:17,977 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/config.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:18,019 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/config.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:18,104 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:12:18,147 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:18,192 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:18,252 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:12:18,269 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:18,326 | INFO | HTTP Request: GET https://huggingface.co/api/models/llava-hf/llava-1.5-7b-hf/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-05-22 02:12:18,385 | INFO | HTTP Request: GET https://huggingface.co/api/models/llava-hf/llava-1.5-7b-hf/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-05-22 02:12:18,450 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/tokenizer.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:12:18,494 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/tokenizer.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:18,537 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/tokenizer.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:18,663 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/tokenizer.model "HTTP/1.1 302 Found"
+2026-05-22 02:12:18,716 | INFO | HTTP Request: GET https://huggingface.co/api/models/llava-hf/llava-1.5-7b-hf/xet-read-token/b234b804b114d9e37bb655e11cbbb5f5e971b7a9 "HTTP/1.1 200 OK"
+2026-05-22 02:12:19,086 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/added_tokens.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:12:19,124 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/added_tokens.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:19,168 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/added_tokens.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:19,242 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/special_tokens_map.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:12:19,282 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/special_tokens_map.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:19,327 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/special_tokens_map.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:19,683 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:12:19,699 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/config.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:19,754 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
+2026-05-22 02:12:19,809 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:12:19,828 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/config.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:24,470 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/model.safetensors "HTTP/1.1 404 Not Found"
+2026-05-22 02:12:24,522 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/model.safetensors.index.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:12:24,565 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/model.safetensors.index.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:24,611 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/model.safetensors.index.json "HTTP/1.1 200 OK"
+2026-05-22 02:12:24,710 | INFO | HTTP Request: GET https://huggingface.co/api/models/llava-hf/llava-1.5-7b-hf/revision/main "HTTP/1.1 200 OK"
+2026-05-22 02:12:24,794 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/model-00002-of-00003.safetensors "HTTP/1.1 302 Found"
+2026-05-22 02:12:24,840 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/model-00001-of-00003.safetensors "HTTP/1.1 302 Found"
+2026-05-22 02:12:24,902 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/model-00003-of-00003.safetensors "HTTP/1.1 302 Found"
+2026-05-22 02:14:24,686 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/generation_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:14:24,729 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/generation_config.json "HTTP/1.1 200 OK"
+2026-05-22 02:14:24,777 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/generation_config.json "HTTP/1.1 200 OK"
+2026-05-22 02:14:24,792 | INFO |   LLaVA base loaded | VRAM: 4.08 GB
+2026-05-22 02:14:26,438 | INFO |   Loading LoRA adapter: /kaggle/input/datasets/gokulfaleja/final-adapter
+2026-05-22 02:14:28,515 | INFO |   Adapter loaded | VRAM: 4.16 GB
+2026-05-22 02:14:28,524 | INFO | VRAM after LLaVA load: 4.16 GB (free: 11.48 GB)
+2026-05-22 02:14:28,524 | INFO | 
+============================================================
+2026-05-22 02:14:28,525 | INFO | STAGE 6: Reloading ColQwen2 for Online Retrieval
+2026-05-22 02:14:28,526 | INFO | ============================================================
+2026-05-22 02:14:28,527 | INFO | VRAM available: 11.48 GB
+2026-05-22 02:14:28,529 | INFO | Loading ColQwen2: vidore/colqwen2-v1.0-hf
+2026-05-22 02:14:28,530 | INFO |   VRAM before load: 4.16 GB
+2026-05-22 02:14:28,592 | INFO | HTTP Request: GET https://huggingface.co/api/models/vidore/colqwen2-v1.0-hf/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-05-22 02:14:28,649 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-05-22 02:14:28,700 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/chat_template.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:14:28,719 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/chat_template.json "HTTP/1.1 200 OK"
+2026-05-22 02:14:28,774 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/chat_template.jinja "HTTP/1.1 404 Not Found"
+2026-05-22 02:14:28,827 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/audio_tokenizer_config.json "HTTP/1.1 404 Not Found"
+2026-05-22 02:14:28,881 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-05-22 02:14:28,939 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/preprocessor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:14:28,956 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/preprocessor_config.json "HTTP/1.1 200 OK"
+2026-05-22 02:14:29,013 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-05-22 02:14:29,070 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/preprocessor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:14:29,091 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/preprocessor_config.json "HTTP/1.1 200 OK"
+2026-05-22 02:14:29,161 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:14:29,178 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/config.json "HTTP/1.1 200 OK"
+2026-05-22 02:14:29,280 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:14:29,300 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-05-22 02:14:29,356 | INFO | HTTP Request: GET https://huggingface.co/api/models/vidore/colqwen2-v1.0-hf/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-05-22 02:14:29,419 | INFO | HTTP Request: GET https://huggingface.co/api/models/vidore/colqwen2-v1.0-hf/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-05-22 02:14:30,035 | INFO | HTTP Request: GET https://huggingface.co/api/models/vidore/colqwen2-v1.0-hf "HTTP/1.1 200 OK"
+2026-05-22 02:14:30,038 | INFO |   Processor loaded
+2026-05-22 02:14:30,086 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:14:30,104 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/config.json "HTTP/1.1 200 OK"
+2026-05-22 02:14:30,167 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-22 02:14:30,184 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/vidore/colqwen2-v1.0-hf/0d3e414967fde994dd99a0ccc29bcb34b5355712/config.json "HTTP/1.1 200 OK"
+2026-05-22 02:14:30,287 | INFO | HTTP Request: HEAD https://huggingface.co/vidore/colqwen2-v1.0-hf/resolve/main/model.safetensors "HTTP/1.1 302 Found"
+2026-05-22 02:15:01,881 | INFO |   Model loaded on cuda:0
+2026-05-22 02:15:01,883 | INFO |   VRAM after load: 8.58 GB (free: 7.06 GB)
+2026-05-22 02:15:01,884 | INFO | ColQwen2 reloaded | VRAM: 8.58 GB (free: 7.06 GB)
+2026-05-22 02:15:01,885 | INFO | 
+============================================================
+2026-05-22 02:15:01,885 | INFO | STAGE 7: Full RAG Evaluation (End-to-End)
+2026-05-22 02:15:01,886 | INFO | ============================================================
+2026-05-22 02:15:01,886 | INFO | ============================================================
+2026-05-22 02:15:01,887 | INFO | PHASE 2 EVALUATION - RAG Pipeline
+2026-05-22 02:15:01,889 | INFO | ============================================================
+2026-05-22 02:15:01,890 | INFO | 
+--- Query 1/3 ---
+2026-05-22 02:15:01,890 | INFO |   Type:  image_text
+2026-05-22 02:15:01,891 | INFO |   Query: What are the key findings in this chest X-ray?
+2026-05-22 02:15:01,892 | INFO |   VRAM:  8.58 GB
+2026-05-22 02:15:01,981 | INFO |   Query image: 1_IM-0001-4001.dcm.png
+2026-05-22 02:15:01,981 | INFO | Retrieval mode: image + text
+2026-05-22 02:15:01,982 | WARNING | Joint image+text encoding failed, falling back to image-only
+2026-05-22 02:15:06,142 | INFO |   MaxSim scoring: 1 queries x 3826 docs
+2026-05-22 02:15:07,517 | INFO |     Query 1/1 scored
+2026-05-22 02:15:07,519 | INFO |   Scores range: [557.63, 761.00]
+2026-05-22 02:15:07,843 | INFO | Retrieved 3 cases: [('1', 761.0), ('1785', 661.4942), ('1738', 659.9733)]
+2026-05-22 02:15:07,844 | INFO |   Context: 1028 chars, ~145 words
+2026-05-22 02:15:21,683 | INFO |   Answer: Clear lung fields without bibasilar airspace disease or nodules. Heart size appears normal for age with mildly increased left atrial size which may be due to hypertension rather than congestive heart 
+2026-05-22 02:15:21,684 | INFO |   Retrieved: ['1', '1785', '1738']
+2026-05-22 02:15:21,685 | INFO |   Scores: [761.0, 661.4942, 659.9733]
+2026-05-22 02:15:21,686 | INFO |   Time: 19.7s (ret=5.86s, gen=13.84s)
+2026-05-22 02:15:21,687 | INFO | 
+--- Query 2/3 ---
+2026-05-22 02:15:21,687 | INFO |   Type:  image_text
+2026-05-22 02:15:21,688 | INFO |   Query: Is there cardiomegaly or any cardiac abnormality?
+2026-05-22 02:15:21,689 | INFO |   VRAM:  8.58 GB
+2026-05-22 02:15:21,776 | INFO |   Query image: 4_IM-2050-1001.dcm.png
+2026-05-22 02:15:21,777 | INFO | Retrieval mode: image + text
+2026-05-22 02:15:21,778 | WARNING | Joint image+text encoding failed, falling back to image-only
+2026-05-22 02:15:25,804 | INFO |   MaxSim scoring: 1 queries x 3826 docs
+2026-05-22 02:15:27,220 | INFO |     Query 1/1 scored
+2026-05-22 02:15:27,222 | INFO |   Scores range: [575.17, 761.00]
+2026-05-22 02:15:27,535 | INFO | Retrieved 3 cases: [('4', 761.0), ('1689', 670.7937), ('315', 670.7493)]
+2026-05-22 02:15:27,536 | INFO |   Context: 1614 chars, ~218 words
+2026-05-22 02:15:31,630 | INFO |   Answer: Normal heart size and medial contours. Clear lungs without active airspace disease. Stable findings compared to prior studies.
+2026-05-22 02:15:31,631 | INFO |   Retrieved: ['4', '1689', '315']
+2026-05-22 02:15:31,632 | INFO |   Scores: [761.0, 670.7937, 670.7493]
+2026-05-22 02:15:31,632 | INFO |   Time: 9.85s (ret=5.76s, gen=4.09s)
+2026-05-22 02:15:31,633 | INFO | 
+--- Query 3/3 ---
+2026-05-22 02:15:31,634 | INFO |   Type:  image_text
+2026-05-22 02:15:31,634 | INFO |   Query: Are there signs of pleural effusion or pneumonia?
+2026-05-22 02:15:31,635 | INFO |   VRAM:  8.58 GB
+2026-05-22 02:15:31,683 | INFO |   Query image: 7_IM-2263-1001.dcm.png
+2026-05-22 02:15:31,683 | INFO | Retrieval mode: image + text
+2026-05-22 02:15:31,684 | WARNING | Joint image+text encoding failed, falling back to image-only
+2026-05-22 02:15:35,669 | INFO |   MaxSim scoring: 1 queries x 3826 docs
+2026-05-22 02:15:37,133 | INFO |     Query 1/1 scored
+2026-05-22 02:15:37,135 | INFO |   Scores range: [562.89, 740.00]
+2026-05-22 02:15:37,456 | INFO | Retrieved 3 cases: [('7', 740.0), ('2140', 662.9229), ('3284', 662.0481)]
+2026-05-22 02:15:37,456 | INFO |   Context: 1293 chars, ~175 words
+2026-05-22 02:15:42,121 | INFO |   Answer: No evidence suggestive of pleuritis, pneumonitis, or edema. Normal chest X-ray appearance with no infiltrates.
+2026-05-22 02:15:42,122 | INFO |   Retrieved: ['7', '2140', '3284']
+2026-05-22 02:15:42,122 | INFO |   Scores: [740.0, 662.9229, 662.0481]
+2026-05-22 02:15:42,123 | INFO |   Time: 10.44s (ret=5.77s, gen=4.66s)
+2026-05-22 02:15:42,124 | INFO | 
+============================================================
+2026-05-22 02:15:42,124 | INFO | STAGE 8: Saving Results
+2026-05-22 02:15:42,125 | INFO | ============================================================
+2026-05-22 02:15:42,127 | INFO | JSON: /kaggle/working/evaluation/phase2_results_20260522_021542.json
+2026-05-22 02:15:42,128 | INFO | CSV:  /kaggle/working/evaluation/phase2_results_20260522_021542.csv
+2026-05-22 02:15:42,130 | INFO | Report: /kaggle/working/reports/phase2_report_20260522_021542.md

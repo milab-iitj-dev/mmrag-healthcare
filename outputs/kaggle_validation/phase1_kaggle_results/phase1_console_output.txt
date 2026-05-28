@@ -1,0 +1,124 @@
+2026-05-15 20:26:19,483 | INFO | ============================================================
+2026-05-15 20:26:19,484 | INFO | PHASE 1 EVALUATION — LLaVA-1.5-7B + LoRA on OpenI
+2026-05-15 20:26:19,484 | INFO | ============================================================
+2026-05-15 20:26:19,524 | INFO | GPU: Tesla T4  |  VRAM: 15.6 GB
+2026-05-15 20:26:19,525 | INFO | PyTorch: 2.10.0+cu128  |  CUDA: 12.8
+2026-05-15 20:26:26,192 | INFO | Adapter: /kaggle/input/datasets/gokulfaleja/llava-medical-adapter
+2026-05-15 20:26:26,221 | INFO | Dataset: /kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized (7470 images)
+2026-05-15 20:26:26,222 | INFO | Loading processor: llava-hf/llava-1.5-7b-hf
+2026-05-15 20:26:26,406 | INFO | HTTP Request: GET https://huggingface.co/api/models/llava-hf/llava-1.5-7b-hf/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-05-15 20:26:26,487 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-15 20:26:26,488 | WARNING | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-05-15 20:26:26,500 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/processor_config.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:26,514 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/processor_config.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:26,609 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/chat_template.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-15 20:26:26,621 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/chat_template.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:26,635 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/chat_template.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:26,735 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/chat_template.jinja "HTTP/1.1 307 Temporary Redirect"
+2026-05-15 20:26:26,747 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/chat_template.jinja "HTTP/1.1 200 OK"
+2026-05-15 20:26:26,760 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/chat_template.jinja "HTTP/1.1 200 OK"
+2026-05-15 20:26:26,853 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/audio_tokenizer_config.json "HTTP/1.1 404 Not Found"
+2026-05-15 20:26:26,937 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-15 20:26:26,949 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/processor_config.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:27,034 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/preprocessor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-15 20:26:27,045 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/preprocessor_config.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:27,058 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/preprocessor_config.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:27,163 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/processor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-15 20:26:27,175 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/processor_config.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:27,258 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/preprocessor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-15 20:26:27,270 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/preprocessor_config.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:27,351 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-15 20:26:27,363 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/config.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:27,375 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/config.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:27,474 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-15 20:26:27,486 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:27,499 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:27,604 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-15 20:26:27,616 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:27,704 | INFO | HTTP Request: GET https://huggingface.co/api/models/llava-hf/llava-1.5-7b-hf/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-05-15 20:26:27,793 | INFO | HTTP Request: GET https://huggingface.co/api/models/llava-hf/llava-1.5-7b-hf/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-05-15 20:26:27,878 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/tokenizer.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-15 20:26:27,889 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/tokenizer.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:27,902 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/tokenizer.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:28,041 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/tokenizer.model "HTTP/1.1 302 Found"
+2026-05-15 20:26:28,162 | INFO | HTTP Request: GET https://huggingface.co/api/models/llava-hf/llava-1.5-7b-hf/xet-read-token/b234b804b114d9e37bb655e11cbbb5f5e971b7a9 "HTTP/1.1 200 OK"
+2026-05-15 20:26:28,974 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/added_tokens.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-15 20:26:28,986 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/added_tokens.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:28,998 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/added_tokens.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:29,096 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/special_tokens_map.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-15 20:26:29,108 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/special_tokens_map.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:29,120 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/special_tokens_map.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:29,519 | INFO | Loading model (4-bit NF4 quantization) ...
+2026-05-15 20:26:29,607 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-15 20:26:29,618 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/config.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:29,703 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
+2026-05-15 20:26:29,808 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-15 20:26:29,820 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/config.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:34,450 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/model.safetensors "HTTP/1.1 404 Not Found"
+2026-05-15 20:26:34,537 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/model.safetensors.index.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-15 20:26:34,551 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/model.safetensors.index.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:34,563 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/model.safetensors.index.json "HTTP/1.1 200 OK"
+2026-05-15 20:26:34,661 | INFO | HTTP Request: GET https://huggingface.co/api/models/llava-hf/llava-1.5-7b-hf/revision/main "HTTP/1.1 200 OK"
+2026-05-15 20:26:34,771 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/model-00001-of-00003.safetensors "HTTP/1.1 302 Found"
+2026-05-15 20:26:34,816 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/model-00003-of-00003.safetensors "HTTP/1.1 302 Found"
+2026-05-15 20:26:34,824 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/model-00002-of-00003.safetensors "HTTP/1.1 302 Found"
+2026-05-15 20:27:39,377 | INFO | HTTP Request: HEAD https://huggingface.co/llava-hf/llava-1.5-7b-hf/resolve/main/generation_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-15 20:27:39,392 | INFO | HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/generation_config.json "HTTP/1.1 200 OK"
+2026-05-15 20:27:39,406 | INFO | HTTP Request: GET https://huggingface.co/api/resolve-cache/models/llava-hf/llava-1.5-7b-hf/b234b804b114d9e37bb655e11cbbb5f5e971b7a9/generation_config.json "HTTP/1.1 200 OK"
+2026-05-15 20:27:39,420 | INFO | Base model loaded — VRAM: 4.06 GB
+2026-05-15 20:27:39,421 | INFO | Loading LoRA adapter: /kaggle/input/datasets/gokulfaleja/llava-medical-adapter
+2026-05-15 20:27:40,707 | INFO | Adapter loaded — VRAM: 4.14 GB
+2026-05-15 20:27:58,597 | INFO | Selected 5 evaluation samples
+2026-05-15 20:27:58,600 | INFO | ============================================================
+2026-05-15 20:27:58,601 | INFO | EVALUATION — 5 samples
+2026-05-15 20:27:58,602 | INFO | ============================================================
+2026-05-15 20:27:58,602 | INFO | 
+--- Sample 1/5 ---
+2026-05-15 20:27:58,603 | INFO |   UID:   1
+2026-05-15 20:27:58,603 | INFO |   Image: 1_IM-0001-3001.dcm.png
+2026-05-15 20:27:58,604 | INFO |   Q:     Briefly describe the key findings in this chest X-ray.
+2026-05-15 20:28:07,418 | INFO |   A:     No acute cardiopulmonary abnormality identified on examination of thorax and upper extremities with no evidence for active disease or significant underlying pathology. Stable appearance compared to prior studies, without any new nodules noted at that time frame either.
+2026-05-15 20:28:07,418 | INFO |   GT:    Normal chest x-.
+2026-05-15 20:28:07,419 | INFO |   Time:  8.61s
+2026-05-15 20:28:07,420 | INFO | 
+--- Sample 2/5 ---
+2026-05-15 20:28:07,421 | INFO |   UID:   2
+2026-05-15 20:28:07,421 | INFO |   Image: 2_IM-0652-1001.dcm.png
+2026-05-15 20:28:07,422 | INFO |   Q:     Is there cardiomegaly? Answer briefly.
+2026-05-15 20:28:14,529 | INFO |   A:     No acute abnormality identified on this examination. Chest x-. Normal chest X-.Heart size is normal for age and body surface area, with no evidence of congestion or edema noted at the base stations.
+2026-05-15 20:28:14,530 | INFO |   GT:    No acute pulmonary findings.
+2026-05-15 20:28:14,530 | INFO |   Time:  7.0s
+2026-05-15 20:28:14,531 | INFO | 
+--- Sample 3/5 ---
+2026-05-15 20:28:14,531 | INFO |   UID:   4
+2026-05-15 20:28:14,532 | INFO |   Image: 4_IM-2050-1001.dcm.png
+2026-05-15 20:28:14,532 | INFO |   Q:     Are the lungs clear or abnormal? State findings only.
+2026-05-15 20:28:21,591 | INFO |   A:     No acute cardiopulmonary disease identified on this examination.
+2026-05-15 20:28:21,592 | INFO |   GT:    1. Bullous emphysema and interstitial fibrosis. 2. Probably scarring in the left apex, although difficult to exclude a cavitary lesion. 3. Opacities in the bilateral upper lobes could represent scarri
+2026-05-15 20:28:21,593 | INFO |   Time:  6.93s
+2026-05-15 20:28:21,593 | INFO | 
+--- Sample 4/5 ---
+2026-05-15 20:28:21,594 | INFO |   UID:   7
+2026-05-15 20:28:21,595 | INFO |   Image: 7_IM-2263-1001.dcm.png
+2026-05-15 20:28:21,595 | INFO |   Q:     Is there pleural effusion? Answer in one sentence.
+2026-05-15 20:28:28,628 | INFO |   A:     No acute cardiopulmonary abnormality.
+2026-05-15 20:28:28,629 | INFO |   GT:    Basilar atelectasis. No confluent lobar consolidation or pleural effusion.
+2026-05-15 20:28:28,630 | INFO |   Time:  6.96s
+2026-05-15 20:28:28,631 | INFO | 
+--- Sample 5/5 ---
+2026-05-15 20:28:28,632 | INFO |   UID:   9
+2026-05-15 20:28:28,632 | INFO |   Image: 9_IM-2407-1001.dcm.png
+2026-05-15 20:28:28,633 | INFO |   Q:     What is the radiological impression? Be concise.
+2026-05-15 20:28:35,554 | INFO |   A:     No acute cardiopulmonary abnormality identified on this examination.
+2026-05-15 20:28:35,555 | INFO |   GT:    Increased size of density in the left cardiophrenic . Primary differential considerations include increased size of prominent epicardial fat, pericardial mass, pleural mass or cardiac aneurysm. CT che
+2026-05-15 20:28:35,556 | INFO |   Time:  6.82s
+2026-05-15 20:28:35,557 | INFO | 
+============================================================
+2026-05-15 20:28:35,558 | INFO |   EVALUATION COMPLETE
+2026-05-15 20:28:35,558 | INFO |   Samples:  5/5
+2026-05-15 20:28:35,559 | INFO |   Avg time: 7.26s per image
+2026-05-15 20:28:35,560 | INFO |   VRAM:     4.15 GB
+2026-05-15 20:28:35,560 | INFO | ============================================================
+2026-05-15 20:28:35,563 | INFO | JSON saved: /kaggle/working/results/evaluation_results_20260515_202835.json
+2026-05-15 20:28:35,563 | INFO | CSV saved:  /kaggle/working/results/evaluation_results_20260515_202835.csv
+2026-05-15 20:28:35,564 | INFO | Report:     /kaggle/working/results/evaluation_report_20260515_202835.md

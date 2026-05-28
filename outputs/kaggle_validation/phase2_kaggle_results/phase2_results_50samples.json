@@ -1,0 +1,407 @@
+{
+  "summary": {
+    "phase": "Phase 2 - ColQwen2 Retrieval + LLaVA Generation",
+    "total_queries": 5,
+    "successful": 5,
+    "text_only": 3,
+    "image_text": 2,
+    "avg_retrieval_time": 2.71,
+    "avg_generation_time": 4.34,
+    "avg_total_time": 7.07,
+    "top_k": 3,
+    "index_size": 50,
+    "colqwen2_model": "vidore/colqwen2-v1.0-hf",
+    "llava_model": "llava-hf/llava-1.5-7b-hf",
+    "vram_gb": 13.02,
+    "gpu": "Tesla T4",
+    "timestamp": "2026-05-21T20:37:20.490190"
+  },
+  "build_meta": {
+    "build_timestamp": "2026-05-21T20:34:19.711697",
+    "model": "vidore/colqwen2-v1.0-hf",
+    "num_indexed": 50,
+    "num_skipped": 0,
+    "build_time_seconds": 239.27,
+    "embedding_dim": 128,
+    "avg_seq_len": 759.7
+  },
+  "results": [
+    {
+      "query": "What are the key findings in this chest X-ray?",
+      "query_type": "text_only",
+      "answer": "Clear lungs without focal airspace disease. Heart size appears normal for age. Mediastinal contours appear stable. Right lower lung base opacity represents calcified granulation tissue. Left basilar opacities could be due to underlying pulmonary edema secondary to congestive heart failure but also can be related to other causes such as mild emphysematous change. Recommend follow up echocardiography if there's concern about fluid overload.",
+      "retrieved": [
+        {
+          "rank": 1,
+          "case_id": "31",
+          "score": 15.2067,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/31_IM-1450-1001.dcm.png",
+          "findings": null,
+          "impression": "Suggestion of slightly more prominent interstitial markings, which may represent some bronchitic/bronchiolitis changes. No suspicious nodules, pneumonia, effusions, or CHF. Stable mediastinal contour",
+          "report": "IMPRESSION: Suggestion of slightly more prominent interstitial markings, which may represent some bronchitic/bronchiolitis changes. No suspicious nodules, pneumonia, effusions, or CHF. Stable mediastinal contour",
+          "metadata": {
+            "mesh_terms": [
+              "Markings/lung/interstitial"
+            ],
+            "problems": [
+              "Markings"
+            ]
+          }
+        },
+        {
+          "rank": 2,
+          "case_id": "9",
+          "score": 15.1985,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/9_IM-2407-1001.dcm.png",
+          "findings": "The examination consists of frontal and lateral radiographs of the chest. The cardiac silhouette is not enlarged. There has been apparent interval increase in low density convexity at the left cardiophrenic . Calcified granuloma is again seen in the right upper lobe. There is no consolidation, pleural effusion or pneumothorax",
+          "impression": "Increased size of density in the left cardiophrenic . Primary differential considerations include increased size of prominent epicardial fat, pericardial mass, pleural mass or cardiac aneurysm. CT chest with contrast is recommended. These findings and recommendations were discussed . by Dr. telephone at p.m. /. Dr. <>technologist receipt of the results",
+          "report": "FINDINGS: The examination consists of frontal and lateral radiographs of the chest. The cardiac silhouette is not enlarged. There has been apparent interval increase in low density convexity at the left cardiophrenic . Calcified granuloma is again seen in the right upper lobe. There is no consolidation, pleural effusion or pneumothorax IMPRESSION: Increased size of density in the left cardiophrenic . Primary differential considerations include increased size of prominent epicardial fat, pericardial mass, pleural mass or cardiac aneurysm. CT chest with contrast is recommended. These findings and recommendations were discussed . by Dr. telephone at p.m. /. Dr. <>technologist receipt of the results",
+          "metadata": {
+            "mesh_terms": [
+              "Calcified Granuloma/lung/upper lobe/right",
+              "Density/cardiophrenic angle/left"
+            ],
+            "problems": [
+              "Calcified Granuloma",
+              "Density"
+            ]
+          }
+        },
+        {
+          "rank": 3,
+          "case_id": "38",
+          "score": 15.1868,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/38_IM-1911-1001.dcm.png",
+          "findings": "Lungs are clear. There is no pneumothorax or pleural effusion. The heart and mediastinum are within normal limits. Bony structures are intact",
+          "impression": "No acute cardiopulmonary process",
+          "report": "FINDINGS: Lungs are clear. There is no pneumothorax or pleural effusion. The heart and mediastinum are within normal limits. Bony structures are intact IMPRESSION: No acute cardiopulmonary process",
+          "metadata": {
+            "mesh_terms": [
+              "normal"
+            ],
+            "problems": [
+              "normal"
+            ]
+          }
+        }
+      ],
+      "context_length": 1466,
+      "image_source": "retrieved (case 31)",
+      "retrieval_time_sec": 0.86,
+      "generation_time_sec": 11.88,
+      "total_time_sec": 12.79,
+      "input_tokens": 1092,
+      "output_tokens": 100,
+      "query_id": 1,
+      "query_image_path": null
+    },
+    {
+      "query": "Is there cardiomegaly or any cardiac abnormality?",
+      "query_type": "text_only",
+      "answer": "Normal heart size and no acute radiographic cardiopathy identified.",
+      "retrieved": [
+        {
+          "rank": 1,
+          "case_id": "27",
+          "score": 15.2753,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/27_IM-1168-2002.dcm.png",
+          "findings": "Lungs are overall hyperexpanded with flattening of the diaphragms. No focal consolidation. No pleural effusions or pneumothoraces. Heart and mediastinum of normal size and contour. Degenerative changes in the thoracic spine",
+          "impression": "Hyperexpanded but clear lungs",
+          "report": "FINDINGS: Lungs are overall hyperexpanded with flattening of the diaphragms. No focal consolidation. No pleural effusions or pneumothoraces. Heart and mediastinum of normal size and contour. Degenerative changes in the thoracic spine IMPRESSION: Hyperexpanded but clear lungs",
+          "metadata": {
+            "mesh_terms": [
+              "Lung/hyperdistention",
+              "Diaphragm/flattened",
+              "Thoracic Vertebrae/degenerative"
+            ],
+            "problems": [
+              "Lung",
+              "Diaphragm",
+              "Thoracic Vertebrae"
+            ]
+          }
+        },
+        {
+          "rank": 2,
+          "case_id": "21",
+          "score": 15.0643,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/21_IM-0729-1001-0001.dcm.png",
+          "findings": null,
+          "impression": "Heart size normal. Mediastinal silhouettes and pulmonary vascularity are within normal limits. Calcified lingular granuloma. No focal consolidations or pleural effusions. No pneumothorax. Breast implants there is a moderate wedge deformity of the midthoracic vertebrae, T6, age-indeterminate",
+          "report": "IMPRESSION: Heart size normal. Mediastinal silhouettes and pulmonary vascularity are within normal limits. Calcified lingular granuloma. No focal consolidations or pleural effusions. No pneumothorax. Breast implants there is a moderate wedge deformity of the midthoracic vertebrae, T6, age-indeterminate",
+          "metadata": {
+            "mesh_terms": [
+              "Calcified Granuloma/lung/lingula",
+              "Breast Implants",
+              "Deformity/thoracic vertebrae/moderate"
+            ],
+            "problems": [
+              "Calcified Granuloma",
+              "Breast Implants",
+              "Deformity"
+            ]
+          }
+        },
+        {
+          "rank": 3,
+          "case_id": "12",
+          "score": 15.0054,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/12_IM-0133-1001.dcm.png",
+          "findings": "Lungs are clear bilaterally. Cardiac and mediastinal silhouettes are normal. Pulmonary vasculature is normal. No pneumothorax or pleural effusion. No acute bony abnormality",
+          "impression": "No acute cardiopulmonary abnormality",
+          "report": "FINDINGS: Lungs are clear bilaterally. Cardiac and mediastinal silhouettes are normal. Pulmonary vasculature is normal. No pneumothorax or pleural effusion. No acute bony abnormality IMPRESSION: No acute cardiopulmonary abnormality",
+          "metadata": {
+            "mesh_terms": [
+              "normal"
+            ],
+            "problems": [
+              "normal"
+            ]
+          }
+        }
+      ],
+      "context_length": 1226,
+      "image_source": "retrieved (case 27)",
+      "retrieval_time_sec": 0.75,
+      "generation_time_sec": 2.95,
+      "total_time_sec": 3.75,
+      "input_tokens": 1070,
+      "output_tokens": 16,
+      "query_id": 2,
+      "query_image_path": null
+    },
+    {
+      "query": "Describe any pulmonary abnormalities visible.",
+      "query_type": "text_only",
+      "answer": "No significant findings.",
+      "retrieved": [
+        {
+          "rank": 1,
+          "case_id": "45",
+          "score": 15.0347,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/45_IM-2081-1001.dcm.png",
+          "findings": "Stable cardiomegaly with vascular prominence without overt edema. No focal airspace disease. No large pleural effusion or pneumothorax. The are intact",
+          "impression": "Stable cardiomegaly without overt pulmonary edema",
+          "report": "FINDINGS: Stable cardiomegaly with vascular prominence without overt edema. No focal airspace disease. No large pleural effusion or pneumothorax. The are intact IMPRESSION: Stable cardiomegaly without overt pulmonary edema",
+          "metadata": {
+            "mesh_terms": [
+              "Cardiomegaly",
+              "Pulmonary Congestion"
+            ],
+            "problems": [
+              "Cardiomegaly",
+              "Pulmonary Congestion"
+            ]
+          }
+        },
+        {
+          "rank": 2,
+          "case_id": "25",
+          "score": 14.993,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/25_IM-1024-2001.dcm.png",
+          "findings": "The heart is within normal limits in size. Surgical suture material projects over the right lung apex. The lungs are hyperlucent and hyperinflated compatible with emphysema. There is left lower lobe airspace disease identified. There is moderate left pleural effusion and small right pleural effusion. No visualized pneumothorax",
+          "impression": "1. Left lower lobe airspace disease and bilateral pleural effusions, left greater than right. This may be secondary to inhalational injury. Recommend followup to ensure complete resolution",
+          "report": "FINDINGS: The heart is within normal limits in size. Surgical suture material projects over the right lung apex. The lungs are hyperlucent and hyperinflated compatible with emphysema. There is left lower lobe airspace disease identified. There is moderate left pleural effusion and small right pleural effusion. No visualized pneumothorax IMPRESSION: 1. Left lower lobe airspace disease and bilateral pleural effusions, left greater than right. This may be secondary to inhalational injury. Recommend followup to ensure complete resolution",
+          "metadata": {
+            "mesh_terms": [
+              "Sutures/lung/apex/right",
+              "Lung, Hyperlucent",
+              "Lung/hyperdistention",
+              "Pulmonary Emphysema",
+              "Airspace Disease/lung/lower lobe/left",
+              "Pleural Effusion/left/moderate",
+              "Pleural Effusion/right/small"
+            ],
+            "problems": [
+              "Sutures",
+              "Lung, Hyperlucent",
+              "Lung",
+              "Pulmonary Emphysema",
+              "Airspace Disease",
+              "Pleural Effusion",
+              "Pleural Effusion"
+            ]
+          }
+        },
+        {
+          "rank": 3,
+          "case_id": "5",
+          "score": 14.9765,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/5_IM-2117-1003002.dcm.png",
+          "findings": "The cardiomediastinal silhouette and pulmonary vasculature are within normal limits. There is no pneumothorax or pleural effusion. There are no focal areas of consolidation. Cholecystectomy clips are present. Small T-spine osteophytes. There is biapical pleural thickening, unchanged from prior. Mildly hyperexpanded lungs",
+          "impression": "No acute cardiopulmonary abnormality",
+          "report": "FINDINGS: The cardiomediastinal silhouette and pulmonary vasculature are within normal limits. There is no pneumothorax or pleural effusion. There are no focal areas of consolidation. Cholecystectomy clips are present. Small T-spine osteophytes. There is biapical pleural thickening, unchanged from prior. Mildly hyperexpanded lungs IMPRESSION: No acute cardiopulmonary abnormality",
+          "metadata": {
+            "mesh_terms": [
+              "Osteophyte/thoracic vertebrae/multiple/small",
+              "Thickening/pleura/apex/bilateral",
+              "Lung/hyperdistention/mild"
+            ],
+            "problems": [
+              "Osteophyte",
+              "Thickening",
+              "Lung"
+            ]
+          }
+        }
+      ],
+      "context_length": 1652,
+      "image_source": "retrieved (case 45)",
+      "retrieval_time_sec": 0.74,
+      "generation_time_sec": 2.07,
+      "total_time_sec": 2.86,
+      "input_tokens": 1169,
+      "output_tokens": 6,
+      "query_id": 3,
+      "query_image_path": null
+    },
+    {
+      "query": "Are the lungs clear? Describe any opacities or effusions.",
+      "query_type": "image_text",
+      "answer": "Clear lungs with no active pulmonary findings.",
+      "retrieved": [
+        {
+          "rank": 1,
+          "case_id": "10",
+          "score": 761.0,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/10_IM-0002-2001.dcm.png",
+          "findings": "The cardiomediastinal silhouette is within normal limits for size and contour. The lungs are normally inflated without evidence of focal airspace disease, pleural effusion, or pneumothorax. Stable calcified granuloma within the right upper lung. No acute bone abnormality",
+          "impression": "No acute cardiopulmonary process",
+          "report": "FINDINGS: The cardiomediastinal silhouette is within normal limits for size and contour. The lungs are normally inflated without evidence of focal airspace disease, pleural effusion, or pneumothorax. Stable calcified granuloma within the right upper lung. No acute bone abnormality IMPRESSION: No acute cardiopulmonary process",
+          "metadata": {
+            "mesh_terms": [
+              "Calcified Granuloma/lung/upper lobe/right"
+            ],
+            "problems": [
+              "Calcified Granuloma"
+            ]
+          }
+        },
+        {
+          "rank": 2,
+          "case_id": "30",
+          "score": 662.3975,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/30_IM-1385-1001.dcm.png",
+          "findings": "Lungs are clear without focal consolidation, effusion, or pneumothorax. Normal heart size. Negative for pneumoperitoneum. Bony thorax and soft tissue grossly unremarkable",
+          "impression": "Negative acute cardiopulmonary abnormality",
+          "report": "FINDINGS: Lungs are clear without focal consolidation, effusion, or pneumothorax. Normal heart size. Negative for pneumoperitoneum. Bony thorax and soft tissue grossly unremarkable IMPRESSION: Negative acute cardiopulmonary abnormality",
+          "metadata": {
+            "mesh_terms": [
+              "normal"
+            ],
+            "problems": [
+              "normal"
+            ]
+          }
+        },
+        {
+          "rank": 3,
+          "case_id": "51",
+          "score": 661.4435,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/51_IM-2125-1001.dcm.png",
+          "findings": "Heart size is normal and cardiomediastinal silhouette is normal. There are scattered calcified granulomas throughout both lung . Lungs are clear bilaterally otherwise. No bony or soft tissue abnormalities",
+          "impression": "No acute cardiopulmonary abnormality",
+          "report": "FINDINGS: Heart size is normal and cardiomediastinal silhouette is normal. There are scattered calcified granulomas throughout both lung . Lungs are clear bilaterally otherwise. No bony or soft tissue abnormalities IMPRESSION: No acute cardiopulmonary abnormality",
+          "metadata": {
+            "mesh_terms": [
+              "Calcified Granuloma/lung/bilateral/scattered"
+            ],
+            "problems": [
+              "Calcified Granuloma"
+            ]
+          }
+        }
+      ],
+      "context_length": 1164,
+      "image_source": "query",
+      "retrieval_time_sec": 5.79,
+      "generation_time_sec": 2.63,
+      "total_time_sec": 8.42,
+      "input_tokens": 1022,
+      "output_tokens": 13,
+      "query_id": 4,
+      "query_image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/10_IM-0002-2001.dcm.png"
+    },
+    {
+      "query": "What is the overall radiological impression?",
+      "query_type": "image_text",
+      "answer": "Normal chest X-ray.",
+      "retrieved": [
+        {
+          "rank": 1,
+          "case_id": "13",
+          "score": 761.0,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/13_IM-0198-1001.dcm.png",
+          "findings": "The cardiac silhouette is borderline enlarged. Otherwise, there is no focal opacity. Mediastinal contours are within normal limits. There is no large pleural effusion. No pneumothorax",
+          "impression": "Borderline enlargement of the cardiac silhouette without acute pulmonary disease",
+          "report": "FINDINGS: The cardiac silhouette is borderline enlarged. Otherwise, there is no focal opacity. Mediastinal contours are within normal limits. There is no large pleural effusion. No pneumothorax IMPRESSION: Borderline enlargement of the cardiac silhouette without acute pulmonary disease",
+          "metadata": {
+            "mesh_terms": [
+              "Cardiac Shadow/borderline"
+            ],
+            "problems": [
+              "Cardiac Shadow"
+            ]
+          }
+        },
+        {
+          "rank": 2,
+          "case_id": "4",
+          "score": 641.6029,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/4_IM-2050-1001.dcm.png",
+          "findings": "There are diffuse bilateral interstitial and alveolar opacities consistent with chronic obstructive lung disease and bullous emphysema. There are irregular opacities in the left lung apex, that could represent a cavitary lesion in the left lung apex.There are streaky opacities in the right upper lobe, scarring. The cardiomediastinal silhouette is normal in size and contour. There is no pneumothorax or large pleural effusion",
+          "impression": "1. Bullous emphysema and interstitial fibrosis. 2. Probably scarring in the left apex, although difficult to exclude a cavitary lesion. 3. Opacities in the bilateral upper lobes could represent scarring, however the absence of comparison exam, recommend short interval followup radiograph or CT thorax to document resolution",
+          "report": "FINDINGS: There are diffuse bilateral interstitial and alveolar opacities consistent with chronic obstructive lung disease and bullous emphysema. There are irregular opacities in the left lung apex, that could represent a cavitary lesion in the left lung apex.There are streaky opacities in the right upper lobe, scarring. The cardiomediastinal silhouette is normal in size and contour. There is no pneumothorax or large pleural effusion IMPRESSION: 1. Bullous emphysema and interstitial fibrosis. 2. Probably scarring in the left apex, although difficult to exclude a cavitary lesion. 3. Opacities in the bilateral upper lobes could represent scarring, however the absence of comparison exam, recommend short interval followup radiograph or CT thorax to document resolution",
+          "metadata": {
+            "mesh_terms": [
+              "Pulmonary Disease, Chronic Obstructive",
+              "Bullous Emphysema",
+              "Pulmonary Fibrosis/interstitial",
+              "Cicatrix/lung/upper lobe/left",
+              "Opacity/lung/apex/left/irregular",
+              "Opacity/lung/upper lobe/right/streaky",
+              "Opacity/pulmonary alveoli",
+              "Opacity/lung/bilateral/interstitial/diffuse"
+            ],
+            "problems": [
+              "Pulmonary Disease, Chronic Obstructive",
+              "Bullous Emphysema",
+              "Pulmonary Fibrosis",
+              "Cicatrix",
+              "Opacity",
+              "Opacity",
+              "Opacity",
+              "Opacity"
+            ]
+          }
+        },
+        {
+          "rank": 3,
+          "case_id": "10",
+          "score": 635.4353,
+          "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/10_IM-0002-2001.dcm.png",
+          "findings": "The cardiomediastinal silhouette is within normal limits for size and contour. The lungs are normally inflated without evidence of focal airspace disease, pleural effusion, or pneumothorax. Stable calcified granuloma within the right upper lung. No acute bone abnormality",
+          "impression": "No acute cardiopulmonary process",
+          "report": "FINDINGS: The cardiomediastinal silhouette is within normal limits for size and contour. The lungs are normally inflated without evidence of focal airspace disease, pleural effusion, or pneumothorax. Stable calcified granuloma within the right upper lung. No acute bone abnormality IMPRESSION: No acute cardiopulmonary process",
+          "metadata": {
+            "mesh_terms": [
+              "Calcified Granuloma/lung/upper lobe/right"
+            ],
+            "problems": [
+              "Calcified Granuloma"
+            ]
+          }
+        }
+      ],
+      "context_length": 1855,
+      "image_source": "query",
+      "retrieval_time_sec": 5.39,
+      "generation_time_sec": 2.15,
+      "total_time_sec": 7.54,
+      "input_tokens": 1202,
+      "output_tokens": 8,
+      "query_id": 5,
+      "query_image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/13_IM-0198-1001.dcm.png"
+    }
+  ]
+}

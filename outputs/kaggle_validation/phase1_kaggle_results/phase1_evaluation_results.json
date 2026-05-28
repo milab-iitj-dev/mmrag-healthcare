@@ -1,0 +1,82 @@
+{
+  "summary": {
+    "total_samples": 5,
+    "successful": 5,
+    "failed": 0,
+    "avg_time_sec": 7.26,
+    "total_time_sec": 36.32,
+    "vram_gb": 4.15,
+    "gpu": "Tesla T4",
+    "model": "llava-hf/llava-1.5-7b-hf",
+    "adapter": "LoRA (r=16, α=32)",
+    "quantization": "4-bit NF4",
+    "timestamp": "2026-05-15T20:28:35.557353"
+  },
+  "results": [
+    {
+      "answer": "No acute cardiopulmonary abnormality identified on examination of thorax and upper extremities with no evidence for active disease or significant underlying pathology. Stable appearance compared to prior studies, without any new nodules noted at that time frame either.",
+      "raw_answer": "No acute cardiopulmonary abnormality identified on examination of thorax and upper extremities with no evidence for active disease or significant underlying pathology.. . . . Stable appearance compared to prior studies, without any new nodules noted at that time frame either. The patient is stable clinically based",
+      "time_sec": 8.61,
+      "input_tokens": 616,
+      "output_tokens": 64,
+      "question": "Briefly describe the key findings in this chest X-ray.",
+      "sample_id": 1,
+      "uid": "1",
+      "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/1_IM-0001-3001.dcm.png",
+      "image_name": "1_IM-0001-3001.dcm.png",
+      "ground_truth": "Normal chest x-."
+    },
+    {
+      "answer": "No acute abnormality identified on this examination. Chest x-. Normal chest X-.Heart size is normal for age and body surface area, with no evidence of congestion or edema noted at the base stations.",
+      "raw_answer": "No acute abnormality identified on this examination.. . . . Chest x-. . . Normal chest X-. . .. Heart size is normal for age and body surface area, with no evidence of congestion or edema noted at the base stations. Lungs are clear without bibasilar air",
+      "time_sec": 7.0,
+      "input_tokens": 610,
+      "output_tokens": 64,
+      "question": "Is there cardiomegaly? Answer briefly.",
+      "sample_id": 2,
+      "uid": "2",
+      "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/2_IM-0652-1001.dcm.png",
+      "image_name": "2_IM-0652-1001.dcm.png",
+      "ground_truth": "No acute pulmonary findings."
+    },
+    {
+      "answer": "No acute cardiopulmonary disease identified on this examination.",
+      "raw_answer": "No acute cardiopulmonary disease identified on this examination.. . . . If you have any questions, please call our interpreting service at (503)7пі list",
+      "time_sec": 6.93,
+      "input_tokens": 614,
+      "output_tokens": 64,
+      "question": "Are the lungs clear or abnormal? State findings only.",
+      "sample_id": 3,
+      "uid": "4",
+      "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/4_IM-2050-1001.dcm.png",
+      "image_name": "4_IM-2050-1001.dcm.png",
+      "ground_truth": "1. Bullous emphysema and interstitial fibrosis. 2. Probably scarring in the left apex, although difficult to exclude a cavitary lesion. 3. Opacities in the bilateral upper lobes could represent scarring, however the absence of comparison exam, recommend short interval followup radiograph or CT thorax to document resolution."
+    },
+    {
+      "answer": "No acute cardiopulmonary abnormality.",
+      "raw_answer": "No acute cardiopulmonary abnormality.. . . . Stable appearance of the chest since last examination with no evidence for active disease or pneumonia at this time period, however mild right basilar airspace opacities are noted which may represent chronic changes such as scarring",
+      "time_sec": 6.96,
+      "input_tokens": 612,
+      "output_tokens": 64,
+      "question": "Is there pleural effusion? Answer in one sentence.",
+      "sample_id": 4,
+      "uid": "7",
+      "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/7_IM-2263-1001.dcm.png",
+      "image_name": "7_IM-2263-1001.dcm.png",
+      "ground_truth": "Basilar atelectasis. No confluent lobar consolidation or pleural effusion."
+    },
+    {
+      "answer": "No acute cardiopulmonary abnormality identified on this examination.",
+      "raw_answer": "No acute cardiopulmonary abnormality identified on this examination.. . . . Stable appearance of right upper lobe opacity, which may represent chronic disease or prior surgical scar without evidence for active pulmonary edema at this time period and no pneumothorax noted herein",
+      "time_sec": 6.82,
+      "input_tokens": 611,
+      "output_tokens": 64,
+      "question": "What is the radiological impression? Be concise.",
+      "sample_id": 5,
+      "uid": "9",
+      "image_path": "/kaggle/input/datasets/raddar/chest-xrays-indiana-university/images/images_normalized/9_IM-2407-1001.dcm.png",
+      "image_name": "9_IM-2407-1001.dcm.png",
+      "ground_truth": "Increased size of density in the left cardiophrenic . Primary differential considerations include increased size of prominent epicardial fat, pericardial mass, pleural mass or cardiac aneurysm. CT chest with contrast is recommended. These findings and recommendations were discussed .  by Dr.   telephone at  p.m. /. Dr. <>technologist receipt of the results."
+    }
+  ]
+}

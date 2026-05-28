@@ -1,0 +1,6 @@
+query_id,query,query_type,answer,retrieved_case_ids,retrieved_scores,retrieval_time_sec,generation_time_sec,total_time_sec
+1,What are the key findings in this chest X-ray?,text_only,Clear lungs without focal airspace disease. Heart size appears normal for age. Mediastinal contours appear stable. Right lower lung base opacity represents calcified granulation tissue. Left basilar opacities could be due to underlying pulmonary edema secondary to congestive heart failure but also can be related to other causes such as mild emphysematous change. Recommend follow up echocardiography if there's concern about fluid overload.,31; 9; 38,15.2067; 15.1985; 15.1868,0.86,11.88,12.79
+2,Is there cardiomegaly or any cardiac abnormality?,text_only,Normal heart size and no acute radiographic cardiopathy identified.,27; 21; 12,15.2753; 15.0643; 15.0054,0.75,2.95,3.75
+3,Describe any pulmonary abnormalities visible.,text_only,No significant findings.,45; 25; 5,15.0347; 14.993; 14.9765,0.74,2.07,2.86
+4,Are the lungs clear? Describe any opacities or effusions.,image_text,Clear lungs with no active pulmonary findings.,10; 30; 51,761.0; 662.3975; 661.4435,5.79,2.63,8.42
+5,What is the overall radiological impression?,image_text,Normal chest X-ray.,13; 4; 10,761.0; 641.6029; 635.4353,5.39,2.15,7.54
