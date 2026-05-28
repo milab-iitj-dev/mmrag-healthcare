@@ -3,7 +3,7 @@ title: "Healthcare Multimodal RAG: Retrieval-Augmented Generation for Medical Vi
 message: "If you use this software, please cite it as below."
 type: software
 version: "2.0.0"
-date-released: "2025-06-01"
+date-released: "2026-05-29"
 license: Apache-2.0
 repository-code: "https://github.com/milab-iitj-dev/mmrag-healthcare"
 authors:

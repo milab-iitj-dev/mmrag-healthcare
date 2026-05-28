@@ -12,9 +12,11 @@ checkpoints/
 *.pt
 *.pth
 
-# Outputs
-outputs/
+# Outputs (ignore runtime outputs, but keep kaggle validation evidence)
+outputs/*
 !outputs/.gitkeep
+!outputs/kaggle_validation/
+!outputs/kaggle_validation/**
 
 # Python
 __pycache__/
