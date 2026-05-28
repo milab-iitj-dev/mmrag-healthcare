@@ -54,6 +54,28 @@ End-to-end validation of the complete RAG pipeline:
 - `results/console_output_{timestamp}.txt`
 - `colqwen2_index/` (saved retrieval index)
 
+### `kaggle_fast_inference.py` — ⚡ Fast RAG Inference (Recommended for Demos)
+
+Loads a **pre-built** ColQwen2 index and runs the full RAG pipeline in **~20 seconds per query** — no need to rebuild the 4-hour index.
+
+**Prerequisites**: Save the `colqwen2_index/` output from a previous `kaggle_rag.py` run as a Kaggle dataset.
+
+**Supports three query modes** (configured via simple variables at the top):
+- `"text"` — text-only query
+- `"image"` — image-only query
+- `"image_text"` — image + text query (best results)
+
+| Feature | Value |
+|---------|-------|
+| Index loading | ~5 seconds (vs ~4 hours to rebuild) |
+| Per-query time | ~20 seconds |
+| Batch mode | Yes (multiple queries in one run) |
+| Output | JSON + Markdown report |
+
+**Outputs**:
+- `fast_inference_results/fast_inference_{timestamp}.json`
+- `fast_inference_results/fast_inference_report_{timestamp}.md`
+
 ## How to Run
 
 1. Create a new Kaggle notebook
