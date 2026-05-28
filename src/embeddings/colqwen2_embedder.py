@@ -105,10 +105,16 @@ class ColQwen2Embedder:
         from transformers import ColQwen2ForRetrieval, ColQwen2Processor
 
         # HuggingFace authentication for gated models
+        # Set HF_TOKEN environment variable or use `huggingface-cli login`
         try:
+            import os
             from huggingface_hub import login
-            login(token="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")
-            logger.info("  HuggingFace authentication successful")
+            hf_token = os.environ.get("HF_TOKEN", os.environ.get("HUGGINGFACE_TOKEN"))
+            if hf_token:
+                login(token=hf_token)
+                logger.info("  HuggingFace authentication successful")
+            else:
+                logger.info("  No HF_TOKEN set — using cached credentials or public models")
         except Exception as e:
             logger.warning(f"  HuggingFace login skipped: {e}")
 
