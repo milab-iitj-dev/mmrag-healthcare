@@ -27,6 +27,9 @@ tqdm>=4.65.0
 # ── Phase 2: ColQwen2 Retrieval ──────────────────────────
 colpali-engine>=0.3.0                    # ColQwen2 model weights + compatibility
 
+# ── Inference UI ─────────────────────────────────────────
+gradio>=5.0.0                             # Professional inference web interface
+
 # ── Phase 2: Evaluation ─────────────────────────────────
 # (uncomment when implementing evaluation)
 # nltk>=3.8.0

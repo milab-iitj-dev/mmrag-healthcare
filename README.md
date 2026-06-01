@@ -51,7 +51,13 @@ A modular system for medical image understanding that combines vision-language m
 │   ├── offline_indexing.py       # Index builder
 │   └── evaluation.py             # Evaluation runner
 │
+├── ui/                           # Professional inference UI (Gradio)
+│   ├── app.py                    # Gradio Blocks application
+│   ├── theme.py                  # Custom dark medical theme
+│   └── formatters.py             # Output formatting utilities
+│
 ├── scripts/                      # Training, inference, validation CLI
+│   ├── launch_ui.py              # Web UI launcher
 │   ├── inference.py              # Single/batch inference
 │   ├── train_qlora.py            # QLoRA fine-tuning
 │   ├── validate.py               # Validation smoke tests
@@ -117,6 +123,21 @@ python -m pipelines.rag_vqa \
     --query "What does this chest X-ray show?" \
     --query-image path/to/xray.png
 ```
+
+### Web UI — Interactive Inference
+
+```bash
+# Full mode (GPU required)
+python scripts/launch_ui.py
+
+# UI preview only (no GPU)
+python scripts/launch_ui.py --ui-only
+
+# HPC with public URL
+python scripts/launch_ui.py --share
+```
+
+Open **http://localhost:7860** — upload a chest X-ray, type a question, click **Analyze**.
 
 ---
 

@@ -22,6 +22,9 @@ setup(
         "tqdm>=4.65.0",
     ],
     extras_require={
+        "ui": [
+            "gradio>=5.0.0",
+        ],
         "colqwen2": [
             "colpali-engine>=0.3.0",
         ],
