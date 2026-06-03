@@ -5,8 +5,9 @@ Produces per-token embeddings for late-interaction retrieval (MaxSim).
 Unlike CLIP's single-vector approach, ColQwen2 retains spatial information
 by generating one embedding per image patch / text token.
 
-Uses the HuggingFace-native ColQwen2ForRetrieval + ColQwen2Processor
-from transformers>=4.46.0 for stable, dependency-light usage.
+Uses ColQwen2 + ColQwen2Processor from colpali-engine for stable
+ColPali-family model loading (transformers 4.47 does not expose
+ColQwen2ForRetrieval natively, so we rely on colpali-engine).
 
 Key design decisions:
   - Does NOT extend BaseEmbedder because ColQwen2 produces multi-vector
@@ -99,10 +100,10 @@ class ColQwen2Embedder:
 
         Args:
             config: Config dict. Expected structure:
-                config["retrieval"]["colqwen2"]["model_name"] = "vidore/colqwen2-v1.0-hf"
+                config["retrieval"]["colqwen2"]["model_name"] = "vidore/colqwen2-v1.0"
                 config["retrieval"]["colqwen2"]["batch_size"] = 4
         """
-        from transformers import ColQwen2ForRetrieval, ColQwen2Processor
+        from colpali_engine.models import ColQwen2, ColQwen2Processor
 
         # HuggingFace authentication for gated models
         # Set HF_TOKEN environment variable or use `huggingface-cli login`
@@ -119,7 +120,7 @@ class ColQwen2Embedder:
             logger.warning(f"  HuggingFace login skipped: {e}")
 
         colqwen2_cfg = config.get("retrieval", {}).get("colqwen2", {})
-        model_id = colqwen2_cfg.get("model_name", "vidore/colqwen2-v1.0-hf")
+        model_id = colqwen2_cfg.get("model_name", "vidore/colqwen2-v1.0")
         self._batch_size = colqwen2_cfg.get("batch_size", 4)
 
         logger.info(f"Loading ColQwen2 model: {model_id}")
@@ -129,7 +130,7 @@ class ColQwen2Embedder:
         logger.info("  Processor loaded")
 
         # Load model in bfloat16 for memory efficiency
-        self._model = ColQwen2ForRetrieval.from_pretrained(
+        self._model = ColQwen2.from_pretrained(
             model_id,
             torch_dtype=torch.bfloat16,
             device_map="auto",

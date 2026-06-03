@@ -34,7 +34,7 @@ retrieval:
   # --- ColQwen2 Settings (Phase 2 — active) ---
   colqwen2:
     enabled: true
-    model_name: "vidore/colqwen2-v1.0-hf"
+    model_name: "vidore/colqwen2-v1.0"
     batch_size: 4                        # conservative for VRAM
     index_path: "data/indexes/colqwen2_index/"
 
