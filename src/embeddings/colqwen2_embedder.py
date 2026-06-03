@@ -178,14 +178,22 @@ class ColQwen2Embedder:
                 f" ({len(batch_images)} images)"
             )
 
-            # Process images through ColQwen2 processor
-            inputs = self._processor(
-                images=batch_images,
-                return_tensors="pt",
-            ).to(self._model.device)
+            # Use colpali_engine's dedicated process_images() API.
+            # The generic __call__ (inherited from Qwen2VLProcessor)
+            # does NOT correctly generate image_grid_thw for ColQwen2,
+            # causing attention shape mismatches in the vision tower.
+            inputs = self._process_images_safe(batch_images)
 
-            with torch.no_grad():
-                outputs = self._model(**inputs)
+            # Log shapes for debugging
+            self._log_input_shapes(inputs, "encode_images")
+
+            try:
+                with torch.no_grad():
+                    outputs = self._model(**inputs)
+            except RuntimeError as e:
+                logger.error(f"ColQwen2 forward pass failed in encode_images: {e}")
+                self._log_input_shapes(inputs, "encode_images [FAILED]")
+                raise
 
             # Extract embeddings tensor from model output object
             embeddings = _extract_embeddings(outputs, context="encode_images")
@@ -224,15 +232,19 @@ class ColQwen2Embedder:
         for i in range(0, len(queries), batch_size):
             batch_queries = queries[i:i + batch_size]
 
-            inputs = self._processor(
-                text=batch_queries,
-                return_tensors="pt",
-                padding=True,
-                truncation=True,
-            ).to(self._model.device)
+            # Use colpali_engine's dedicated process_queries() API
+            inputs = self._process_queries_safe(batch_queries)
 
-            with torch.no_grad():
-                outputs = self._model(**inputs)
+            # Log shapes for debugging
+            self._log_input_shapes(inputs, "encode_queries")
+
+            try:
+                with torch.no_grad():
+                    outputs = self._model(**inputs)
+            except RuntimeError as e:
+                logger.error(f"ColQwen2 forward pass failed in encode_queries: {e}")
+                self._log_input_shapes(inputs, "encode_queries [FAILED]")
+                raise
 
             embeddings = _extract_embeddings(outputs, context="encode_queries")
             for j in range(embeddings.shape[0]):
@@ -251,11 +263,15 @@ class ColQwen2Embedder:
         batch_size: Optional[int] = None,
     ) -> List[torch.Tensor]:
         """
-        Encode image + text queries into multi-vector embeddings.
+        Encode image queries for retrieval against the document index.
 
-        For multimodal queries where the user provides both an image
-        and a text question. The processor combines both modalities
-        into a joint representation.
+        ColQwen2 is a visual retriever — it matches image patches against
+        indexed document patches via MaxSim. When a user provides both an
+        image and text, we encode the image using process_images() so the
+        embeddings live in the same space as the indexed documents.
+
+        The text query is not encoded here — it is used separately by the
+        RAG generator (LLaVA) for answer generation.
 
         Args:
             images:     List of query images (one per query).
@@ -263,12 +279,7 @@ class ColQwen2Embedder:
             batch_size: Override default batch size if needed.
 
         Returns:
-            List of torch.Tensor, one per query.
-
-        Note:
-            If the model/processor doesn't natively support joint
-            image+text query encoding, we fall back to encoding the
-            image alone (since ColQwen2 is primarily a visual retriever).
+            List of torch.Tensor, one per query image.
         """
         self._check_loaded()
         batch_size = batch_size or self._batch_size
@@ -283,37 +294,95 @@ class ColQwen2Embedder:
 
         for i in range(0, len(images), batch_size):
             batch_images = images[i:i + batch_size]
-            batch_queries = queries[i:i + batch_size]
 
-            # ColQwen2 processor supports images + text together
-            # The text is used as a query prefix/context with the image
+            # ColQwen2 retrieval encodes images into the document embedding
+            # space. The text query doesn't participate in retrieval encoding;
+            # it's used downstream by LLaVA for answer generation.
+            #
+            # Using process_images() ensures image_grid_thw and pixel_values
+            # are correctly generated for the Qwen2-VL vision tower.
+            inputs = self._process_images_safe(batch_images)
+
+            # Log shapes for debugging
+            self._log_input_shapes(inputs, "encode_image_queries")
+
             try:
-                inputs = self._processor(
-                    images=batch_images,
-                    text=batch_queries,
-                    return_tensors="pt",
-                    padding=True,
-                    truncation=True,
-                ).to(self._model.device)
-            except Exception:
-                # Fallback: if joint encoding fails, encode image only
-                logger.warning(
-                    "Joint image+text query encoding not supported, "
-                    "falling back to image-only encoding"
-                )
-                inputs = self._processor(
-                    images=batch_images,
-                    return_tensors="pt",
-                ).to(self._model.device)
-
-            with torch.no_grad():
-                outputs = self._model(**inputs)
+                with torch.no_grad():
+                    outputs = self._model(**inputs)
+            except RuntimeError as e:
+                logger.error(f"ColQwen2 forward pass failed in encode_image_queries: {e}")
+                self._log_input_shapes(inputs, "encode_image_queries [FAILED]")
+                raise
 
             embeddings = _extract_embeddings(outputs, context="encode_image_queries")
             for j in range(embeddings.shape[0]):
                 all_embeddings.append(embeddings[j].cpu())
 
         return all_embeddings
+
+    # ------------------------------------------------------------------ #
+    #  Processor helpers (colpali_engine API)                               #
+    # ------------------------------------------------------------------ #
+
+    def _process_images_safe(self, images: List[Image.Image]) -> dict:
+        """
+        Process images using colpali_engine's dedicated API.
+
+        Falls back to the generic __call__ only if process_images()
+        is not available (older colpali_engine versions).
+        """
+        # Ensure all images are RGB
+        images = [img.convert("RGB") if img.mode != "RGB" else img for img in images]
+
+        if hasattr(self._processor, "process_images"):
+            inputs = self._processor.process_images(images)
+        else:
+            # Fallback for older colpali_engine versions
+            logger.warning(
+                "ColQwen2Processor.process_images() not found, "
+                "falling back to generic __call__. This may cause "
+                "image_grid_thw shape mismatches."
+            )
+            inputs = self._processor(
+                images=images,
+                return_tensors="pt",
+            )
+
+        return inputs.to(self._model.device)
+
+    def _process_queries_safe(self, queries: List[str]) -> dict:
+        """
+        Process text queries using colpali_engine's dedicated API.
+
+        Falls back to the generic __call__ only if process_queries()
+        is not available (older colpali_engine versions).
+        """
+        if hasattr(self._processor, "process_queries"):
+            inputs = self._processor.process_queries(queries)
+        else:
+            # Fallback for older colpali_engine versions
+            logger.warning(
+                "ColQwen2Processor.process_queries() not found, "
+                "falling back to generic __call__."
+            )
+            inputs = self._processor(
+                text=queries,
+                return_tensors="pt",
+                padding=True,
+                truncation=True,
+            )
+
+        return inputs.to(self._model.device)
+
+    def _log_input_shapes(self, inputs: dict, context: str = "") -> None:
+        """Log tensor shapes for debugging shape-mismatch errors."""
+        parts = [f"  [{context}] Input shapes:"]
+        for k, v in inputs.items():
+            if hasattr(v, "shape"):
+                parts.append(f"    {k}: {v.shape} (dtype={v.dtype})")
+            else:
+                parts.append(f"    {k}: {type(v).__name__}")
+        logger.info("\n".join(parts))
 
     # ------------------------------------------------------------------ #
     #  Scoring (MaxSim late interaction)                                    #
