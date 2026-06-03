@@ -164,9 +164,15 @@ class DocumentStore:
         self._documents.clear()
 
         for doc_id, doc_data in data.get("documents", {}).items():
+            # Handle both field naming conventions:
+            #   - DocumentStore.save() writes: doc_id, text, findings, impression
+            #   - Kaggle index builder writes: case_id, report, findings, impression
+            resolved_id = doc_data.get("doc_id", doc_data.get("case_id", doc_id))
+            resolved_text = doc_data.get("text", doc_data.get("report", ""))
+
             self._documents[doc_id] = Document(
-                doc_id=doc_data["doc_id"],
-                text=doc_data.get("text", ""),
+                doc_id=resolved_id,
+                text=resolved_text,
                 image_path=doc_data.get("image_path", ""),
                 findings=doc_data.get("findings"),
                 impression=doc_data.get("impression"),
