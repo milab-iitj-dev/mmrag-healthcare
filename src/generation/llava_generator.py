@@ -153,30 +153,99 @@ class LLaVAModel(BaseVLM):
             return_tensors="pt",
         )
 
-        # Move to model device and align dtype (processor outputs float32,
-        # but model may be float16 — must match to avoid RuntimeError)
+        # ----------------------------------------------------------
+        # Move tensors to the correct device and dtype.
+        #
+        # CRITICAL: With 4-bit quantized models (bitsandbytes),
+        # next(model.parameters()).dtype may return a quantized dtype
+        # (e.g. uint8). Casting pixel_values to that dtype corrupts
+        # the vision tower, causing bmm shape mismatches like:
+        #   "Expected [16, 2916] but got [16, 1]"
+        #
+        # Strategy:
+        #   - pixel_values → float16 (vision tower compute dtype)
+        #   - integer tensors (input_ids, attention_mask) → device only
+        # ----------------------------------------------------------
         device = self._model.device
-        dtype = next(self._model.parameters()).dtype
-        inputs = {
-            k: v.to(device=device, dtype=dtype) if v.is_floating_point()
-            else v.to(device=device)
-            for k, v in inputs.items()
-        }
+
+        moved_inputs = {}
+        for k, v in inputs.items():
+            if k == "pixel_values":
+                # Always cast pixel_values to float16 — the vision tower
+                # expects this regardless of the LM's quantization dtype
+                moved_inputs[k] = v.to(device=device, dtype=torch.float16)
+            elif v.is_floating_point():
+                moved_inputs[k] = v.to(device=device, dtype=torch.float16)
+            else:
+                moved_inputs[k] = v.to(device=device)
+        inputs = moved_inputs
+
+        # ----------------------------------------------------------
+        # Shape validation — catch mismatches before they crash inside
+        # the model's attention layers with opaque bmm errors.
+        # ----------------------------------------------------------
+        if "input_ids" in inputs:
+            ids_shape = inputs["input_ids"].shape
+            if ids_shape[0] != 1:
+                logger.warning(
+                    f"Unexpected batch size in input_ids: {ids_shape}. "
+                    f"Expected batch_size=1."
+                )
+
+        if "pixel_values" in inputs:
+            pv_shape = inputs["pixel_values"].shape
+            logger.info(f"  pixel_values shape: {pv_shape}, dtype: {inputs['pixel_values'].dtype}")
+            if pv_shape[0] != 1:
+                logger.warning(
+                    f"Unexpected batch size in pixel_values: {pv_shape}. "
+                    f"Expected batch_size=1."
+                )
+
+        if "attention_mask" in inputs and "input_ids" in inputs:
+            am_shape = inputs["attention_mask"].shape
+            ids_shape = inputs["input_ids"].shape
+            if am_shape != ids_shape:
+                logger.warning(
+                    f"attention_mask shape {am_shape} does not match "
+                    f"input_ids shape {ids_shape}."
+                )
 
         input_token_count = inputs["input_ids"].shape[-1]
 
-        # Generate
-        start_time = time.time()
-        with torch.no_grad():
-            output_ids = self._model.generate(
-                **inputs,
-                max_new_tokens=max_new_tokens,
-                temperature=gen_cfg.get("temperature", 0.1),
-                top_p=gen_cfg.get("top_p", 0.9),
-                do_sample=gen_cfg.get("do_sample", False),
-                repetition_penalty=gen_cfg.get("repetition_penalty", 1.1),
+        # ----------------------------------------------------------
+        # Generate — wrapped in try/except for graceful failure
+        # ----------------------------------------------------------
+        try:
+            start_time = time.time()
+            with torch.no_grad():
+                output_ids = self._model.generate(
+                    **inputs,
+                    max_new_tokens=max_new_tokens,
+                    temperature=gen_cfg.get("temperature", 0.1),
+                    top_p=gen_cfg.get("top_p", 0.9),
+                    do_sample=gen_cfg.get("do_sample", False),
+                    repetition_penalty=gen_cfg.get("repetition_penalty", 1.1),
+                )
+            generation_time = time.time() - start_time
+        except RuntimeError as e:
+            error_msg = str(e)
+            # Log detailed diagnostic info for tensor shape errors
+            logger.error(f"Model generation failed: {error_msg}")
+            logger.error(f"  input_ids shape: {inputs.get('input_ids', 'N/A')}")
+            if "pixel_values" in inputs:
+                logger.error(f"  pixel_values shape: {inputs['pixel_values'].shape}")
+                logger.error(f"  pixel_values dtype: {inputs['pixel_values'].dtype}")
+            if "attention_mask" in inputs:
+                logger.error(f"  attention_mask shape: {inputs['attention_mask'].shape}")
+
+            return VLMOutput(
+                answer=f"[Generation error: {error_msg}]",
+                raw_output="",
+                generation_time_sec=0.0,
+                input_token_count=input_token_count,
+                output_token_count=0,
+                metadata={"error": error_msg, "model": self._model_name},
             )
-        generation_time = time.time() - start_time
 
         # Decode — only the NEW tokens (skip the input)
         generated_ids = output_ids[0, input_token_count:]
