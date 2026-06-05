@@ -1,20 +1,25 @@
 """
-Qwen2.5-VL-7B Model Wrapper.
+Qwen2-VL-7B Model Wrapper.
 
-Implements BaseVLM for Qwen2.5-VL-7B-Instruct in pure BF16 precision.
+Implements BaseVLM for Qwen2-VL-7B-Instruct in pure BF16 precision.
 Uses the Qwen2-VL chat template for structured medical VQA with
 strong grounding support.
 
 Loads in bfloat16 with device_map="auto" — uses ~15GB VRAM on A100 40GB.
 No quantization needed.
 
+Compatibility:
+  - Works with transformers>=4.45.0 (tested at 4.47.1)
+  - Compatible with colpali-engine 0.3.8 (ColQwen2 retrieval)
+  - Uses Qwen2VLForConditionalGeneration (NOT Qwen2_5_VL)
+
 Architecture notes:
-  - Qwen2.5-VL uses a different conversation format than LLaVA:
+  - Qwen2-VL uses a structured conversation format:
       <|im_start|>system\n{system_prompt}<|im_end|>
       <|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>{text}<|im_end|>
       <|im_start|>assistant\n
   - The processor handles image token injection automatically
-  - Qwen2.5-VL has much stronger instruction following than LLaVA-1.5
+  - Qwen2-VL has much stronger instruction following than LLaVA-1.5
 """
 
 import time
@@ -52,13 +57,15 @@ MEDICAL_SYSTEM_PROMPT = (
 
 class Qwen2VLModel(BaseVLM):
     """
-    Qwen2.5-VL-7B-Instruct wrapper for grounded medical VQA.
+    Qwen2-VL-7B-Instruct wrapper for grounded medical VQA.
 
     Key advantages over LLaVA-1.5-7B:
       - Stronger instruction following (critical for grounding)
       - Better negation understanding
       - Native multi-turn chat template
       - Dynamic resolution support
+
+    Compatible with transformers==4.47.1 and colpali-engine==0.3.8.
 
     Usage:
         model = Qwen2VLModel()
@@ -71,7 +78,7 @@ class Qwen2VLModel(BaseVLM):
         self._processor = None
         self._config = None
         self._device = None
-        self._model_name = "qwen2.5-vl-7b"
+        self._model_name = "qwen2-vl-7b"
         self._loaded = False
 
     # ------------------------------------------------------------------ #
@@ -80,34 +87,25 @@ class Qwen2VLModel(BaseVLM):
 
     def load(self, config: dict) -> None:
         """
-        Load Qwen2.5-VL-7B in BF16 precision.
+        Load Qwen2-VL-7B in BF16 precision.
 
         Uses pure bfloat16 with device_map="auto" for A100 40GB.
-        No quantization — BF16 Qwen2.5-VL-7B uses ~15GB VRAM,
+        No quantization — BF16 Qwen2-VL-7B uses ~15GB VRAM,
         well within A100 40GB capacity.
+
+        Requires: transformers>=4.45.0 (Qwen2VLForConditionalGeneration)
+        Tested:   transformers==4.47.1 with colpali-engine==0.3.8
         """
-        # Qwen2.5-VL requires transformers >= 4.49.0 and uses a
-        # DIFFERENT class than Qwen2-VL:
-        #   Qwen2-VL   → Qwen2VLForConditionalGeneration
-        #   Qwen2.5-VL → Qwen2_5_VLForConditionalGeneration
-        try:
-            from transformers import (
-                Qwen2_5_VLForConditionalGeneration,
-                AutoProcessor,
-            )
-        except ImportError:
-            raise ImportError(
-                "Qwen2.5-VL requires transformers >= 4.49.0. "
-                "Current version does not have "
-                "Qwen2_5_VLForConditionalGeneration. "
-                "Run: pip install -U transformers>=4.49.0"
-            )
+        from transformers import (
+            Qwen2VLForConditionalGeneration,
+            AutoProcessor,
+        )
 
         self._config = config
         model_cfg = config["model"]
         model_id = model_cfg["model_id"]
 
-        logger.info(f"Loading Qwen2.5-VL model: {model_id}")
+        logger.info(f"Loading Qwen2-VL model: {model_id}")
         logger.info(f"  Precision: bfloat16 (no quantization)")
 
         # Load processor
@@ -115,7 +113,7 @@ class Qwen2VLModel(BaseVLM):
         logger.info("  Processor loaded")
 
         # Load model in pure BF16
-        self._model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+        self._model = Qwen2VLForConditionalGeneration.from_pretrained(
             model_id,
             torch_dtype=torch.bfloat16,
             device_map="auto",
