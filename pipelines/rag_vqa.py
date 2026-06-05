@@ -1,5 +1,5 @@
 """
-RAG-augmented VQA Pipeline — Phase 2
+RAG-augmented VQA Pipeline — Phase 3
 
 End-to-end online pipeline:
     1. Load saved ColQwen2 index
@@ -28,6 +28,7 @@ from PIL import Image
 
 from src.embeddings.colqwen2_embedder import ColQwen2Embedder
 from src.retrieval.colqwen2_retriever import ColQwen2Retriever
+from src.retrieval.hybrid_retriever import HybridRetriever
 from src.context.context_builder import ContextBuilder
 from src.generation.rag_generator import RAGGenerator, RAGOutput
 from src.generation.base_generator import BaseVLM
@@ -40,15 +41,15 @@ logger = setup_logger("pipeline.rag_vqa")
 
 class RAGVQAPipeline:
     """
-    Phase 2 online pipeline: Query → Retrieve → Generate.
+    Phase 3 online pipeline: Query → Retrieve → Generate.
 
-    Loads a pre-built ColQwen2 index and LLaVA model, then
+    Loads a pre-built ColQwen2 dual index and LLaVA model, then
     processes user queries through the full RAG pipeline.
 
-    Supports:
-      - Text-only queries (uses best retrieved image for LLaVA)
-      - Image + text queries (uses query image for LLaVA)
-      - Batch evaluation on dataset samples
+    Supports three retrieval modes:
+      - Text-only queries → ColQwen2 text index
+      - Image-only queries → ColQwen2 image index
+      - Image + text queries → both indexes + RRF fusion + reranking
     """
 
     def __init__(
@@ -78,17 +79,43 @@ class RAGVQAPipeline:
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.preprocessor = MedicalImagePreprocessor()
 
-        # Initialize ColQwen2 embedder and retriever
+        # Initialize ColQwen2 embedder and base retriever
         logger.info("Initializing ColQwen2 retriever...")
         self.embedder = ColQwen2Embedder()
         self.embedder.load(retrieval_config)
 
-        self.retriever = ColQwen2Retriever(self.embedder)
-        self.retriever.load_index(index_dir)
+        colqwen2_retriever = ColQwen2Retriever(
+            self.embedder, config=retrieval_config
+        )
+        colqwen2_retriever.load_index(index_dir)
         logger.info(
-            f"Index loaded: {self.retriever.num_indexed} documents "
+            f"Index loaded: {colqwen2_retriever.num_indexed} documents "
             f"from {index_dir}"
         )
+
+        # Wrap with HybridRetriever if method is 'hybrid'
+        retrieval_method = (
+            retrieval_config
+            .get("retrieval", {})
+            .get("method", "colqwen2")
+        )
+
+        if retrieval_method == "hybrid" and colqwen2_retriever.has_text_index:
+            logger.info(
+                "Using HybridRetriever (dual-index + RRF + reranking)"
+            )
+            self.retriever = HybridRetriever(
+                colqwen2_retriever=colqwen2_retriever,
+                config=retrieval_config,
+            )
+        else:
+            if retrieval_method == "hybrid":
+                logger.warning(
+                    "Hybrid mode requested but no text index found. "
+                    "Falling back to ColQwen2-only retrieval. "
+                    "Run: python -m pipelines.offline_indexing --text-only"
+                )
+            self.retriever = colqwen2_retriever
 
         # Context builder and RAG generator
         self.context_builder = ContextBuilder(
@@ -103,7 +130,10 @@ class RAGVQAPipeline:
             top_k=self.top_k,
         )
 
-        logger.info("RAG VQA pipeline ready")
+        logger.info(
+            f"RAG VQA pipeline ready "
+            f"(retriever: {type(self.retriever).__name__})"
+        )
 
     # ------------------------------------------------------------------ #
     #  Single query                                                        #
@@ -266,7 +296,7 @@ def main():
     from src.utils.device import print_gpu_status
 
     parser = argparse.ArgumentParser(
-        description="Phase 2: RAG-augmented VQA Pipeline"
+        description="Phase 3: RAG-augmented VQA Pipeline (Hybrid Retrieval)"
     )
     parser.add_argument(
         "--model-config",

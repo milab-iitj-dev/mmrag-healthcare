@@ -1,21 +1,22 @@
 # ============================================================
-# Retrieval Configuration — Healthcare MRAG Phase 2
+# Retrieval Configuration — Healthcare MRAG Phase 3
 # ============================================================
-# Controls retrieval methods, index paths, and fusion settings.
+# Controls retrieval methods, index paths, fusion, and reranking.
 #
-# Phase 2: ColQwen2 only (no BM25, CLIP, RRF, reranking)
+# Phase 3: ColQwen2 dual-index (image + text) with RRF fusion
+#           and question-aware reranking.
 # ============================================================
 
 retrieval:
-  # Which retriever(s) to use
-  # Phase 2: "colqwen2" only
-  # Future: "bm25", "clip", "hybrid"
-  method: "colqwen2"
+  # Which retriever to use at the pipeline level
+  # "colqwen2"  = image-only ColQwen2 (Phase 2, backward compatible)
+  # "hybrid"    = dual-index ColQwen2 with RRF fusion (Phase 3)
+  method: "hybrid"
 
-  # Number of documents to retrieve
+  # Number of final documents to return to context builder
   top_k: 3
 
-  # --- BM25 Settings (Phase 3 — not yet implemented) ---
+  # --- BM25 Settings (Phase 3.5 — fallback if ColQwen2 text is weak) ---
   bm25:
     enabled: false
     k1: 1.5                              # term frequency saturation
@@ -23,7 +24,7 @@ retrieval:
     tokenizer: "simple"                  # "simple" | "scispacy" | "nltk"
     index_path: "data/indexes/bm25_index.pkl"
 
-  # --- CLIP Settings (Phase 3 — not yet implemented) ---
+  # --- CLIP Settings (not yet implemented) ---
   clip:
     enabled: false
     model_name: "openai/clip-vit-base-patch32"
@@ -31,27 +32,37 @@ retrieval:
     index_path: "data/indexes/clip_faiss.index"
     embeddings_path: "data/indexes/clip_embeddings.npy"
 
-  # --- ColQwen2 Settings (Phase 2 — active) ---
+  # --- ColQwen2 Settings ---
   colqwen2:
     enabled: true
     model_name: "vidore/colqwen2-v1.0"
     batch_size: 4                        # conservative for VRAM
     index_path: "data/indexes/colqwen2_index/"
 
-  # --- RRF Fusion Settings (Phase 3 — not yet implemented) ---
-  rrf:
-    k: 60                                # RRF constant (standard = 60)
-    weights:
-      bm25: 1.0
-      clip: 1.0
-      colqwen2: 1.5                      # give vision retrieval more weight
+    # Image path remapping: remap Kaggle paths in document_store.json
+    # to HPC image directory. Set to "" to disable remapping.
+    image_base_dir: "data/openi/images/"
 
-# --- Reranking (Phase 3 — not yet implemented) ---
-reranking:
-  enabled: false
-  model_name: "cross-encoder/ms-marco-MiniLM-L-6-v2"
-  batch_size: 16
-  max_length: 512
+    # Phase 3: Dual-index settings
+    dual_index:
+      enabled: true
+      text_max_length: 256               # max tokens for document text encoding
+      text_batch_size: 8                 # text encoding is lighter, can batch more
+
+    # Phase 3: Fusion settings for image+text queries
+    fusion:
+      method: "rrf"                      # "rrf" (rank-based, score-agnostic)
+      rrf_k: 60                          # RRF constant (standard = 60)
+      over_retrieve_k: 15               # retrieve 15 from each, fuse to top_k
+      weights:
+        image: 1.0                       # image retrieval weight in RRF
+        text: 1.0                        # text retrieval weight in RRF
+
+    # Phase 3: Question-aware reranking
+    reranking:
+      enabled: true
+      boost_weight: 0.15                 # how much keyword overlap boosts score
+      medical_stopwords: true            # filter common medical words from overlap
 
 # --- Context Building ---
 context:

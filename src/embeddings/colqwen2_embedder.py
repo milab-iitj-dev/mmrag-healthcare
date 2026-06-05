@@ -253,6 +253,111 @@ class ColQwen2Embedder:
         return all_embeddings
 
     # ------------------------------------------------------------------ #
+    #  Document text encoding (offline indexing — text index)               #
+    # ------------------------------------------------------------------ #
+
+    def encode_document_text(
+        self,
+        texts: List[str],
+        batch_size: Optional[int] = None,
+        max_length: int = 256,
+    ) -> List[torch.Tensor]:
+        """
+        Encode document text (findings + impression) into multi-vector
+        embeddings for the text retrieval index.
+
+        Uses the same process_queries() encoder as online query encoding,
+        but with a higher max_length to accommodate longer report text.
+        Both document text and query text embeddings live in the same
+        ColQwen2 embedding space, enabling text-to-text MaxSim matching.
+
+        Args:
+            texts:      List of document text strings (one per document).
+            batch_size: Override default batch size if needed.
+            max_length: Maximum token length for text encoding.
+                        Default 256 fits most OpenI reports
+                        (findings + impression ≈ 70-280 tokens).
+
+        Returns:
+            List of torch.Tensor, one per document. Each tensor has shape
+            [n_tokens, embed_dim] and is stored on CPU.
+        """
+        self._check_loaded()
+        batch_size = batch_size or self._batch_size
+        all_embeddings = []
+
+        # Filter out empty texts — replace with a minimal placeholder
+        # to maintain alignment with doc_ids
+        texts = [t if t and t.strip() else "no report available" for t in texts]
+
+        for i in range(0, len(texts), batch_size):
+            batch_texts = texts[i:i + batch_size]
+            logger.info(
+                f"  Encoding text batch {i // batch_size + 1}"
+                f"/{(len(texts) + batch_size - 1) // batch_size}"
+                f" ({len(batch_texts)} documents)"
+            )
+
+            # Use process_queries with extended max_length for document text.
+            # Both document text and online queries go through the same
+            # encoder, ensuring they live in the same embedding space.
+            try:
+                if hasattr(self._processor, "process_queries"):
+                    inputs = self._processor.process_queries(
+                        batch_texts,
+                        max_length=max_length,
+                        padding="max_length",
+                        truncation=True,
+                    )
+                else:
+                    # Fallback for older colpali_engine versions
+                    logger.warning(
+                        "ColQwen2Processor.process_queries() not found, "
+                        "falling back to generic __call__."
+                    )
+                    inputs = self._processor(
+                        text=batch_texts,
+                        return_tensors="pt",
+                        padding=True,
+                        truncation=True,
+                        max_length=max_length,
+                    )
+                inputs = inputs.to(self._model.device)
+            except TypeError:
+                # Some versions of process_queries may not accept max_length
+                # as a kwarg — fall back to default processing
+                logger.warning(
+                    "process_queries() does not accept max_length, "
+                    "using default tokenization settings."
+                )
+                inputs = self._process_queries_safe(batch_texts)
+
+            # Log shapes for debugging
+            self._log_input_shapes(inputs, "encode_document_text")
+
+            try:
+                with torch.no_grad():
+                    outputs = self._model(**inputs)
+            except RuntimeError as e:
+                logger.error(
+                    f"ColQwen2 forward pass failed in "
+                    f"encode_document_text: {e}"
+                )
+                self._log_input_shapes(
+                    inputs, "encode_document_text [FAILED]"
+                )
+                raise
+
+            embeddings = _extract_embeddings(
+                outputs, context="encode_document_text"
+            )
+            for j in range(embeddings.shape[0]):
+                all_embeddings.append(embeddings[j].cpu())
+
+        logger.info(f"  Encoded {len(all_embeddings)} document texts total")
+        return all_embeddings
+
+    # ------------------------------------------------------------------ #
     #  Image + text query encoding (online retrieval — multimodal)          #
     # ------------------------------------------------------------------ #
 
