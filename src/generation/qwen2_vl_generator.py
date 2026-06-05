@@ -86,10 +86,22 @@ class Qwen2VLModel(BaseVLM):
         No quantization — BF16 Qwen2.5-VL-7B uses ~15GB VRAM,
         well within A100 40GB capacity.
         """
-        from transformers import (
-            Qwen2VLForConditionalGeneration,
-            AutoProcessor,
-        )
+        # Qwen2.5-VL requires transformers >= 4.49.0 and uses a
+        # DIFFERENT class than Qwen2-VL:
+        #   Qwen2-VL   → Qwen2VLForConditionalGeneration
+        #   Qwen2.5-VL → Qwen2_5_VLForConditionalGeneration
+        try:
+            from transformers import (
+                Qwen2_5_VLForConditionalGeneration,
+                AutoProcessor,
+            )
+        except ImportError:
+            raise ImportError(
+                "Qwen2.5-VL requires transformers >= 4.49.0. "
+                "Current version does not have "
+                "Qwen2_5_VLForConditionalGeneration. "
+                "Run: pip install -U transformers>=4.49.0"
+            )
 
         self._config = config
         model_cfg = config["model"]
@@ -103,7 +115,7 @@ class Qwen2VLModel(BaseVLM):
         logger.info("  Processor loaded")
 
         # Load model in pure BF16
-        self._model = Qwen2VLForConditionalGeneration.from_pretrained(
+        self._model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
             model_id,
             torch_dtype=torch.bfloat16,
             device_map="auto",
