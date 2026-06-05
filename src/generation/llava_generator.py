@@ -299,22 +299,29 @@ class LLaVAModel(BaseVLM):
         Build the LLaVA conversation prompt.
 
         LLaVA-1.5 uses the Vicuna conversation format:
-          USER: <image>\n{question}
-          ASSISTANT:
-        """
-        parts = []
+          USER: <image>\n{instruction}\nASSISTANT:
 
+        IMPORTANT: The context is the structured evidence summary from
+        the EvidenceAggregator — NOT a full prompt template. We inject
+        it directly here with grounding instructions.
+        """
         if context:
-            parts.append(
+            # Single clean prompt — no double wrapping
+            prompt = (
                 f"USER: <image>\n"
-                f"Based on the following clinical evidence:\n{context}\n\n"
-                f"Answer this question: {question}\n"
+                f"You are an expert radiologist. Answer ONLY based on "
+                f"the evidence and the image.\n\n"
+                f"{context}\n\n"
+                f"QUESTION: {question}\n"
+                f"If this is a yes/no question, start with YES or NO. "
+                f"If the evidence says a finding is absent, reflect that. "
+                f"Cite specific evidence.\n"
                 f"ASSISTANT:"
             )
         else:
-            parts.append(f"USER: <image>\n{question}\nASSISTANT:")
+            prompt = f"USER: <image>\n{question}\nASSISTANT:"
 
-        return parts[0]
+        return prompt
 
     def _load_adapter(self, adapter_path: str) -> None:
         """Load a LoRA adapter on top of the base model."""

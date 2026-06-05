@@ -26,6 +26,7 @@ logger = setup_logger("models.factory")
 
 MODEL_REGISTRY = {
     "llava-1.5-7b": "src.generation.llava_generator.LLaVAModel",
+    "qwen2.5-vl-7b": "src.generation.qwen2_vl_generator.Qwen2VLModel",
 }
 
 

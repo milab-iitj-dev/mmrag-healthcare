@@ -3,19 +3,21 @@ Prompt templates for different generation scenarios.
 
 Stores structured prompt templates for:
     - Zero-shot VQA (Phase 1)
-    - RAG-augmented VQA (Phase 2)
+    - RAG-augmented VQA (Phase 2 — legacy)
+    - Grounded RAG VQA (Phase 4 — current)
     - Medical captioning
-    - Grounded reasoning (future phases)
-
-Templates use Python format strings so callers can inject
-the question, context, and image descriptions.
 
 Design notes:
-  - LLaVA-1.5 uses the Vicuna conversation format:
-      USER: <image>\n{instruction}\nASSISTANT:
-  - The <image> token is handled by LLaVA's _build_prompt(),
-    so these templates provide only the instruction text.
-  - The RAG template injects retrieved evidence before the question.
+  - Phase 4 uses the Qwen2.5-VL chat template which handles
+    prompt formatting internally via apply_chat_template().
+  - The system prompt and evidence are passed as structured
+    messages, NOT wrapped in a conversation format.
+  - These templates are now ONLY used as fallback for LLaVA
+    or for the ContextBuilder's legacy build_prompt() method.
+
+IMPORTANT: The Qwen2.5-VL generator does NOT use these templates.
+    It builds messages directly in _build_messages(). These
+    templates exist for backward compatibility with LLaVA.
 """
 
 # ------------------------------------------------------------------ #
@@ -36,31 +38,40 @@ Placeholders:
 """
 
 # ------------------------------------------------------------------ #
-#  Phase 2: RAG-augmented VQA                                          #
+#  Phase 4: Grounded RAG VQA (current)                                 #
 # ------------------------------------------------------------------ #
 
 RAG_VQA_PROMPT = (
-    "You are a medical imaging specialist. Use the following retrieved "
-    "clinical evidence from similar cases to help answer the question.\n"
+    "You are an expert radiologist. Answer the question based ONLY on "
+    "the provided evidence and the image. Do NOT add information that "
+    "is not supported by the evidence.\n"
     "\n"
     "{context}\n"
     "\n"
-    "Based on the image and the retrieved evidence above, "
-    "answer the following question:\n"
-    "{question}\n"
+    "QUESTION: {question}\n"
     "\n"
-    "Provide a detailed, clinically relevant answer. Reference the "
-    "retrieved evidence where applicable."
+    "INSTRUCTIONS:\n"
+    "- If the question is yes/no, start your answer with YES or NO.\n"
+    "- Cite specific evidence to support your answer.\n"
+    "- If the evidence says a finding is ABSENT, your answer must "
+    "reflect that.\n"
+    "- If evidence is insufficient, say so explicitly.\n"
+    "- If the image conflicts with the evidence, state the discrepancy."
 )
 """
-RAG-augmented VQA prompt — question + retrieved evidence.
+Grounded RAG VQA prompt — evidence-focused with strict instructions.
 
-Used when the retrieval pipeline provides context from similar cases.
-The context block contains formatted evidence from the top-k retrieved
-documents (findings, impressions, metadata).
+Used as fallback when the VLM is LLaVA (not Qwen2.5-VL).
+Qwen2.5-VL uses its own structured chat messages instead.
+
+Key changes from Phase 2:
+  - "ONLY" instead of "help" — no permission to ignore evidence
+  - Explicit instruction to reflect ABSENCE when evidence says so
+  - YES/NO instruction for direct answers
+  - Conflict handling instruction
 
 Placeholders:
-    {context}  — formatted retrieved evidence block
+    {context}  — formatted retrieved evidence block (from aggregator)
     {question} — the clinical question
 """
 
@@ -85,7 +96,7 @@ of medical images (e.g., chest X-rays).
 # ------------------------------------------------------------------ #
 
 RAG_CAPTION_PROMPT = (
-    "You are a medical imaging specialist. Use the following retrieved "
+    "You are an expert radiologist. Use the following retrieved "
     "clinical evidence from similar cases to help describe this image.\n"
     "\n"
     "{context}\n"
@@ -99,19 +110,3 @@ RAG-augmented captioning prompt.
 Placeholders:
     {context} — formatted retrieved evidence block
 """
-
-# ------------------------------------------------------------------ #
-#  Future: Grounded reasoning (Phase 5)                                #
-# ------------------------------------------------------------------ #
-
-# GROUNDED_PROMPT = (
-#     "You are a medical imaging specialist. Use the following evidence "
-#     "to answer the question. For each claim in your answer, cite the "
-#     "evidence source (e.g., [Evidence #1]).\n"
-#     "\n"
-#     "{context}\n"
-#     "\n"
-#     "Question: {question}\n"
-#     "\n"
-#     "Provide a grounded answer with citations."
-# )

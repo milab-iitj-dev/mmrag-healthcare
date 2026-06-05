@@ -1,16 +1,16 @@
 """
-RAG-augmented VQA Pipeline — Phase 3
+Grounded RAG VQA Pipeline — Phase 4
 
-End-to-end online pipeline:
-    1. Load saved ColQwen2 index
-    2. Load LLaVA model
+End-to-end online pipeline with evidence grounding:
+    1. Load saved ColQwen2 dual index
+    2. Load VLM (Qwen2.5-VL-7B or LLaVA)
     3. Accept user query (text-only or image + text)
-    4. Retrieve top 3 relevant cases via ColQwen2
-    5. Build context from retrieved evidence
-    6. Generate answer with LLaVA
-    7. Return answer with full provenance
-
-This pipeline extends simple_vqa.py by adding retrieval and context.
+    4. Retrieve top-k relevant cases via ColQwen2 + RRF fusion
+    5. Aggregate evidence into structured summary
+    6. Generate grounded answer with VLM
+    7. Verify answer against evidence (grounding check)
+    8. Score confidence
+    9. Return verified answer with full provenance
 
 Usage:
     python -m pipelines.rag_vqa --query "What does this chest X-ray show?"
@@ -41,15 +41,14 @@ logger = setup_logger("pipeline.rag_vqa")
 
 class RAGVQAPipeline:
     """
-    Phase 3 online pipeline: Query → Retrieve → Generate.
+    Phase 4 grounded pipeline: Query → Retrieve → Aggregate → Generate → Verify.
 
-    Loads a pre-built ColQwen2 dual index and LLaVA model, then
-    processes user queries through the full RAG pipeline.
+    Loads a pre-built ColQwen2 dual index and VLM, then processes
+    user queries through the full grounded RAG pipeline.
 
-    Supports three retrieval modes:
-      - Text-only queries → ColQwen2 text index
-      - Image-only queries → ColQwen2 image index
-      - Image + text queries → both indexes + RRF fusion + reranking
+    Pipeline:
+      Retrieve → Evidence Aggregation → VLM Generation →
+      Grounding Verification → Confidence Scoring → Output
     """
 
     def __init__(
@@ -117,12 +116,16 @@ class RAGVQAPipeline:
                 )
             self.retriever = colqwen2_retriever
 
-        # Context builder and RAG generator
+        # Context builder (used for image selection fallback)
         self.context_builder = ContextBuilder(
             max_context_chars=max_context_chars,
             max_evidence_chars=max_evidence_chars,
         )
 
+        # Grounded RAG generator — auto-creates:
+        #   - EvidenceAggregator
+        #   - GroundingVerifier
+        #   - ConfidenceEstimator
         self.generator = RAGGenerator(
             vlm=self.vlm,
             retriever=self.retriever,
@@ -131,8 +134,9 @@ class RAGVQAPipeline:
         )
 
         logger.info(
-            f"RAG VQA pipeline ready "
-            f"(retriever: {type(self.retriever).__name__})"
+            f"Grounded RAG pipeline ready "
+            f"(retriever: {type(self.retriever).__name__}, "
+            f"vlm: {vlm.model_name})"
         )
 
     # ------------------------------------------------------------------ #
@@ -241,18 +245,35 @@ class RAGVQAPipeline:
                     "retrieved_scores": [
                         d.score for d in output.retrieved_docs
                     ],
+                    "evidence_consensus": (
+                        output.evidence_summary.consensus
+                        if output.evidence_summary else None
+                    ),
+                    "was_corrected": (
+                        output.grounding_result.was_corrected
+                        if output.grounding_result else False
+                    ),
+                    "confidence_level": (
+                        output.confidence.level
+                        if output.confidence else None
+                    ),
+                    "confidence_score": (
+                        output.confidence.score
+                        if output.confidence else None
+                    ),
                     "retrieval_time_sec": output.retrieval_time_sec,
                     "generation_time_sec": output.generation_time_sec,
                     "total_time_sec": output.total_time_sec,
                 }
                 results.append(result)
 
-                logger.info(f"  Question:  {question}")
-                logger.info(f"  Answer:    {output.answer[:200]}...")
+                logger.info(f"  Question:    {question}")
+                logger.info(f"  Answer:      {output.answer[:200]}")
                 logger.info(
-                    f"  Retrieved: {[d.doc_id for d in output.retrieved_docs]}"
+                    f"  Confidence:  "
+                    f"{output.confidence.level if output.confidence else '?'}"
                 )
-                logger.info(f"  Time:      {output.total_time_sec}s")
+                logger.info(f"  Time:        {output.total_time_sec}s")
 
             except Exception as e:
                 logger.error(f"  Error on {sample.sample_id}: {e}")
@@ -296,7 +317,7 @@ def main():
     from src.utils.device import print_gpu_status
 
     parser = argparse.ArgumentParser(
-        description="Phase 3: RAG-augmented VQA Pipeline (Hybrid Retrieval)"
+        description="Phase 4: Grounded RAG VQA Pipeline"
     )
     parser.add_argument(
         "--model-config",
@@ -363,8 +384,9 @@ def main():
     with open(args.retrieval_config) as f:
         retrieval_config = yaml.safe_load(f)
 
-    # Load LLaVA model
-    logger.info("Loading LLaVA model...")
+    # Load VLM (Qwen2.5-VL or LLaVA based on config)
+    model_name = model_config["model"]["name"]
+    logger.info(f"Loading VLM: {model_name}...")
     model = create_model(model_config)
     model.load(model_config)
 
@@ -386,17 +408,43 @@ def main():
         )
 
         print("\n" + "=" * 60)
-        print("RAG VQA Result")
+        print("GROUNDED RAG VQA RESULT")
         print("=" * 60)
-        print(f"Query:    {args.query}")
-        print(f"Answer:   {output.answer}")
+        print(f"Query:       {args.query}")
+        print(f"Answer:      {output.answer}")
+
+        # Grounding info
+        if output.grounding_result:
+            gr = output.grounding_result
+            if gr.was_corrected:
+                print(f"\n⚠ ANSWER WAS CORRECTED")
+                print(f"  Original: {gr.original_answer[:200]}")
+                print(f"  Reason:   {gr.correction_reason}")
+            elif gr.contradiction_detected:
+                print(f"\n⚠ CONTRADICTION DETECTED (not corrected)")
+                print(f"  Reason:   {gr.correction_reason}")
+
+        # Confidence
+        if output.confidence:
+            print(f"\nConfidence:  {output.confidence.level} "
+                  f"({output.confidence.score})")
+            for k, v in output.confidence.factors.items():
+                print(f"  {k}: {v}")
+
+        # Evidence summary
+        if output.evidence_summary:
+            es = output.evidence_summary
+            print(f"\nEvidence:    {es.consensus} "
+                  f"({len(es.relevant_findings)} findings)")
+
+        # Retrieved docs
         print(f"\nRetrieved {len(output.retrieved_docs)} documents:")
         for doc in output.retrieved_docs:
             print(f"  [{doc.metadata.get('rank', '?')}] {doc.doc_id} "
                   f"(score: {doc.score:.4f})")
-        print(f"\nRetrieval time: {output.retrieval_time_sec}s")
-        print(f"Generation time: {output.generation_time_sec}s")
-        print(f"Total time: {output.total_time_sec}s")
+        print(f"\nRetrieval:   {output.retrieval_time_sec}s")
+        print(f"Generation:  {output.generation_time_sec}s")
+        print(f"Total:       {output.total_time_sec}s")
         print("=" * 60)
 
     elif args.eval:
