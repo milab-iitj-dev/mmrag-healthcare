@@ -1,15 +1,12 @@
 """
 Qwen2.5-VL-7B Model Wrapper.
 
-Implements BaseVLM for Qwen2.5-VL-7B-Instruct with optional quantization.
+Implements BaseVLM for Qwen2.5-VL-7B-Instruct in pure BF16 precision.
 Uses the Qwen2-VL chat template for structured medical VQA with
 strong grounding support.
 
-Supports:
-  - Base model inference
-  - 4-bit quantization via bitsandbytes (fits in A100 40GB with room)
-  - bf16/fp16 full precision
-  - Structured grounding prompts with evidence injection
+Loads in bfloat16 with device_map="auto" — uses ~15GB VRAM on A100 40GB.
+No quantization needed.
 
 Architecture notes:
   - Qwen2.5-VL uses a different conversation format than LLaVA:
@@ -27,7 +24,7 @@ import torch
 from PIL import Image
 
 from src.generation.base_generator import BaseVLM, VLMOutput
-from src.utils.device import get_device, get_vram_usage_gb
+from src.utils.device import get_vram_usage_gb
 from src.utils.logging_utils import setup_logger
 
 logger = setup_logger("models.qwen2_vl")
@@ -82,7 +79,13 @@ class Qwen2VLModel(BaseVLM):
     # ------------------------------------------------------------------ #
 
     def load(self, config: dict) -> None:
-        """Load Qwen2.5-VL-7B with optional quantization."""
+        """
+        Load Qwen2.5-VL-7B in BF16 precision.
+
+        Uses pure bfloat16 with device_map="auto" for A100 40GB.
+        No quantization — BF16 Qwen2.5-VL-7B uses ~15GB VRAM,
+        well within A100 40GB capacity.
+        """
         from transformers import (
             Qwen2VLForConditionalGeneration,
             AutoProcessor,
@@ -93,64 +96,19 @@ class Qwen2VLModel(BaseVLM):
         model_id = model_cfg["model_id"]
 
         logger.info(f"Loading Qwen2.5-VL model: {model_id}")
-
-        # Build quantization config
-        quant_config = None
-        quant_enabled = model_cfg.get("quantization", {}).get("enabled", False)
-
-        if quant_enabled and not torch.cuda.is_available():
-            logger.warning(
-                "  Quantization requires CUDA — falling back to CPU mode"
-            )
-            quant_enabled = False
-
-        if quant_enabled:
-            from transformers import BitsAndBytesConfig
-            quant_config = BitsAndBytesConfig(
-                load_in_4bit=True,
-                bnb_4bit_compute_dtype=getattr(
-                    torch,
-                    model_cfg["quantization"].get(
-                        "bnb_4bit_compute_dtype", "bfloat16"
-                    ),
-                ),
-                bnb_4bit_quant_type=model_cfg["quantization"].get(
-                    "bnb_4bit_quant_type", "nf4"
-                ),
-                bnb_4bit_use_double_quant=model_cfg["quantization"].get(
-                    "bnb_4bit_use_double_quant", True
-                ),
-            )
-            logger.info("  4-bit quantization config created")
+        logger.info(f"  Precision: bfloat16 (no quantization)")
 
         # Load processor
         self._processor = AutoProcessor.from_pretrained(model_id)
         logger.info("  Processor loaded")
 
-        # Load model
-        load_kwargs = {
-            "pretrained_model_name_or_path": model_id,
-            "torch_dtype": torch.bfloat16,
-            "low_cpu_mem_usage": True,
-        }
-
-        if quant_config:
-            load_kwargs["quantization_config"] = quant_config
-            load_kwargs["device_map"] = "auto"
-        else:
-            self._device = get_device(model_cfg.get("device", "auto"))
-            if str(self._device) == "cpu":
-                load_kwargs["torch_dtype"] = torch.float32
-                logger.info("  Loading in CPU mode (float32)")
-            else:
-                load_kwargs["device_map"] = "auto"
-
+        # Load model in pure BF16
         self._model = Qwen2VLForConditionalGeneration.from_pretrained(
-            **load_kwargs
+            model_id,
+            torch_dtype=torch.bfloat16,
+            device_map="auto",
+            low_cpu_mem_usage=True,
         )
-
-        if "device_map" not in load_kwargs:
-            self._model = self._model.to(self._device)
 
         self._device = self._model.device
         self._loaded = True

@@ -1,23 +1,20 @@
 # ============================================================
 # Model Configuration — Healthcare MRAG Phase 4
 # ============================================================
-# Qwen2.5-VL-7B for grounded medical VQA.
-# Stronger instruction following than LLaVA-1.5-7B.
-# Fits on A100 40GB with 4-bit quantization (~12GB VRAM).
+# Qwen2.5-VL-7B in pure BF16 for grounded medical VQA.
+# VRAM: ~15GB BF16 on A100 40GB (no quantization needed).
 # ============================================================
 
 model:
   name: "qwen2.5-vl-7b"
   model_id: "Qwen/Qwen2.5-VL-7B-Instruct"
-  device: "auto"                          # "auto", "cuda:0", "cpu"
+  device: "auto"                          # "auto" → device_map="auto"
 
+  # Quantization DISABLED for A100 40GB.
+  # BF16 uses ~15GB VRAM, well within capacity.
+  # Do NOT enable — causes 'normal_kernel_cpu not implemented for Byte'.
   quantization:
-    enabled: true
-    bits: 4
-    method: "bitsandbytes"                # "bitsandbytes" | "gptq" | "awq"
-    bnb_4bit_compute_dtype: "bfloat16"
-    bnb_4bit_quant_type: "nf4"
-    bnb_4bit_use_double_quant: true
+    enabled: false
 
   generation:
     max_new_tokens: 512
@@ -43,4 +40,5 @@ model:
 # To switch back to LLaVA-1.5-7B, change:
 #   name: "llava-1.5-7b"
 #   model_id: "llava-hf/llava-1.5-7b-hf"
+#   quantization.enabled: true
 # ============================================================
