@@ -175,14 +175,41 @@ def run_retrieval_benchmark(
         "query_modes": query_modes,
     }
 
-    # ── Step 5: Save results ──
+    # ── Step 5: Print per-query diagnostics ──
+    diagnostics = metrics.get("diagnostics", [])
+
+    print("\n" + "=" * 70)
+    print("PER-QUERY DIAGNOSTICS")
+    print("=" * 70)
+    for diag in diagnostics:
+        print(
+            f"\n  Query:    {diag['query_text']}"
+            f"\n  Finding:  {diag['finding']}"
+            f"\n  Mode:     {diag['query_mode']}"
+            f"\n  Gold:     {diag['num_gold_docs']} relevant docs"
+            f"\n  Retrieved:{diag['retrieved_ids']}"
+            f"\n  Rel vec:  {diag['relevance_vector']}"
+            f"\n  Hit@1={diag.get('hit@1', '?')} "
+            f"Hit@3={diag.get('hit@3', '?')} "
+            f"Hit@5={diag.get('hit@5', '?')} "
+            f"RR={diag['reciprocal_rank']}"
+        )
+    print("=" * 70)
+
+    # ── Step 6: Save results ──
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     results_path = out_dir / f"retrieval_{timestamp}.json"
 
     output = {
         "benchmark": "retrieval",
         "timestamp": timestamp,
-        "metrics": metrics,
+        "metrics": {
+            "aggregate": metrics["aggregate"],
+            "per_mode": metrics["per_mode"],
+            "timing": metrics["timing"],
+            "config": metrics["config"],
+        },
+        "diagnostics": diagnostics,
         "per_sample": eval_results,
     }
 
@@ -191,23 +218,30 @@ def run_retrieval_benchmark(
 
     logger.info(f"Results saved to {results_path}")
 
-    # Print summary
+    # ── Step 7: Print aggregate summary ──
     agg = metrics["aggregate"]
     print("\n" + "=" * 60)
     print("RETRIEVAL BENCHMARK RESULTS")
     print("=" * 60)
+    print("  Recall@k (Hit@k = 1 if any gold doc in top-k, else 0):")
     for k in top_k_values:
-        print(f"  Recall@{k}:  {agg.get(f'recall@{k}', 0):.4f}")
-    print(f"  MRR:       {agg.get('mrr', 0):.4f}")
+        print(f"    Recall@{k}:    {agg.get(f'recall@{k}', 0):.4f}")
+    print(f"  MRR:           {agg.get('mrr', 0):.4f}")
+    print("  Precision@k (fraction of top-k that are relevant):")
     for k in top_k_values:
-        print(f"  nDCG@{k}:   {agg.get(f'ndcg@{k}', 0):.4f}")
-    print(f"\n  Queries:   {agg.get('num_queries', 0)}")
-    print(f"  Time:      {elapsed:.1f}s")
+        print(f"    Precision@{k}: {agg.get(f'precision@{k}', 0):.4f}")
+    print("  nDCG@k:")
+    for k in top_k_values:
+        print(f"    nDCG@{k}:     {agg.get(f'ndcg@{k}', 0):.4f}")
+    print(f"\n  Queries:       {agg.get('num_queries', 0)}")
+    print(f"  Time:          {elapsed:.1f}s")
 
     if metrics.get("per_mode"):
         print("\nPer Query Mode:")
         for mode, m in metrics["per_mode"].items():
-            print(f"  {mode:12s} | R@3={m.get('recall@3', 0):.4f} "
+            print(f"  {mode:12s} | R@1={m.get('recall@1', 0):.4f} "
+                  f"| R@3={m.get('recall@3', 0):.4f} "
+                  f"| R@5={m.get('recall@5', 0):.4f} "
                   f"| MRR={m.get('mrr', 0):.4f} "
                   f"| n={m.get('num_queries', 0)}")
     print("=" * 60)
