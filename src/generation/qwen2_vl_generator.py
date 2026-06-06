@@ -108,9 +108,23 @@ class Qwen2VLModel(BaseVLM):
         logger.info(f"Loading Qwen2-VL model: {model_id}")
         logger.info(f"  Precision: bfloat16 (no quantization)")
 
-        # Load processor
-        self._processor = AutoProcessor.from_pretrained(model_id)
-        logger.info("  Processor loaded")
+        # Load processor with pixel limits to prevent OOM.
+        # Qwen2-VL uses dynamic resolution — without limits, large images
+        # produce 3000+ visual tokens causing ~40GB attention memory.
+        # 512 patches = ~400K pixels — sufficient for chest X-ray detail.
+        # VRAM budget: ~16.6GB (model) + ~4.5GB (inference) ≈ 21GB on A100 40GB.
+        min_pixels = 256 * 28 * 28    # 200,704 pixels
+        max_pixels = 512 * 28 * 28    # 401,408 pixels
+
+        self._processor = AutoProcessor.from_pretrained(
+            model_id,
+            min_pixels=min_pixels,
+            max_pixels=max_pixels,
+        )
+        logger.info(
+            f"  Processor loaded (pixels: {min_pixels}-{max_pixels}, "
+            f"max ~512 visual tokens)"
+        )
 
         # Load model in pure BF16
         self._model = Qwen2VLForConditionalGeneration.from_pretrained(

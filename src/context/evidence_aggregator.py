@@ -86,6 +86,18 @@ _ASSERTION_RE = re.compile(
     "|".join(_ASSERTION_PATTERNS), re.IGNORECASE
 )
 
+# Markers that indicate a general/descriptive query (not disease-specific)
+_GENERAL_QUERY_MARKERS = [
+    r"\bfindings?\b", r"\babnormalit", r"\bvisible\b",
+    r"\bshow\b", r"\bsee\b", r"\bidentify\b",
+    r"\bdescribe\b", r"\bsummar", r"\boverall\b",
+    r"\bchest x-?ray\b", r"\bradiograph\b",
+]
+
+_GENERAL_RE = re.compile(
+    "|".join(_GENERAL_QUERY_MARKERS), re.IGNORECASE
+)
+
 
 # ------------------------------------------------------------------ #
 #  Data classes                                                        #
@@ -192,36 +204,48 @@ class EvidenceAggregator:
         topic = self._extract_topic(question)
         logger.info(f"Evidence aggregation: topic='{topic}' from '{question}'")
 
-        # Step 2: Extract relevant findings from each report
-        all_findings = []
-        for doc in retrieved_docs:
-            findings = self._extract_relevant_findings(doc, topic)
-            all_findings.extend(findings)
+        # Step 2: Extract findings — different strategy for general vs specific
+        if topic == "__GENERAL__":
+            # GENERAL QUERY: scan all reports for ALL clinical findings
+            all_findings, additional = self._extract_all_findings_scan(
+                retrieved_docs
+            )
+            topic_display = "general findings"
+        else:
+            # SPECIFIC QUERY: look for the specific topic
+            all_findings = []
+            for doc in retrieved_docs:
+                findings = self._extract_relevant_findings(doc, topic)
+                all_findings.extend(findings)
+
+            # Fallback: check full reports if no findings in structured fields
+            if not all_findings:
+                for doc in retrieved_docs:
+                    report_text = self._get_report_text(doc)
+                    if topic.lower() in report_text.lower():
+                        is_neg = bool(_NEGATION_RE.search(
+                            self._get_sentence_with_topic(
+                                report_text, topic
+                            )
+                        ))
+                        all_findings.append(ExtractedFinding(
+                            text=self._get_sentence_with_topic(
+                                report_text, topic
+                            ),
+                            doc_id=doc.doc_id,
+                            score=doc.score,
+                            is_negated=is_neg,
+                            source_field="report",
+                        ))
+
+            additional = self._extract_additional_findings(
+                retrieved_docs, topic
+            )
+            topic_display = topic
 
         # Step 3: Classify and count consensus
         num_absent = sum(1 for f in all_findings if f.is_negated)
         num_present = sum(1 for f in all_findings if not f.is_negated)
-
-        # If no topic-specific findings, check the full reports
-        if not all_findings:
-            # Fall back to checking if any report mentions the topic at all
-            for doc in retrieved_docs:
-                report_text = self._get_report_text(doc)
-                if topic.lower() in report_text.lower():
-                    is_neg = bool(_NEGATION_RE.search(
-                        self._get_sentence_with_topic(report_text, topic)
-                    ))
-                    all_findings.append(ExtractedFinding(
-                        text=self._get_sentence_with_topic(
-                            report_text, topic
-                        ),
-                        doc_id=doc.doc_id,
-                        score=doc.score,
-                        is_negated=is_neg,
-                        source_field="report",
-                    ))
-            num_absent = sum(1 for f in all_findings if f.is_negated)
-            num_present = sum(1 for f in all_findings if not f.is_negated)
 
         num_ambiguous = len(retrieved_docs) - (
             len(set(f.doc_id for f in all_findings))
@@ -232,15 +256,10 @@ class EvidenceAggregator:
             num_absent, num_present, num_ambiguous, len(retrieved_docs)
         )
 
-        # Step 5: Extract additional (non-question-specific) findings
-        additional = self._extract_additional_findings(
-            retrieved_docs, topic
-        )
-
         # Step 6: Format for VLM
         summary = EvidenceSummary(
             question=question,
-            question_topic=topic,
+            question_topic=topic_display,
             total_reports=len(retrieved_docs),
             relevant_findings=all_findings,
             num_absent=num_absent,
@@ -268,9 +287,13 @@ class EvidenceAggregator:
         Extract the medical topic from a clinical question.
 
         Examples:
-            "Is there pleural effusion?" → "pleural effusion"
+            "Is there pleural effusion?"      → "pleural effusion"
             "What are signs of cardiomegaly?" → "cardiomegaly"
-            "Describe the findings" → "findings"
+            "Describe the findings"           → "__GENERAL__"
+            "What does this X-ray show?"      → "__GENERAL__"
+
+        Returns "__GENERAL__" for broad descriptive queries that
+        don't target a specific finding.
         """
         topic = question.strip().rstrip("?.,!")
 
@@ -285,6 +308,17 @@ class EvidenceAggregator:
 
         if not topic:
             topic = question.strip().rstrip("?.,!")
+
+        # Detect general/descriptive queries:
+        # - Topic is too long (>4 words) — probably not a specific finding
+        # - Topic contains general markers ("findings", "visible", "show")
+        word_count = len(topic.split())
+        if word_count > 4 or _GENERAL_RE.search(topic):
+            logger.info(
+                f"  General query detected (topic='{topic}', "
+                f"words={word_count}) — using full-scan mode"
+            )
+            return "__GENERAL__"
 
         return topic
 
@@ -447,6 +481,95 @@ class EvidenceAggregator:
         if num_absent > num_present:
             return "MIXED_LEAN_ABSENT", strength
         return "MIXED_LEAN_PRESENT", strength
+
+    # ------------------------------------------------------------------ #
+    #  Full-scan extraction (for general queries)                           #
+    # ------------------------------------------------------------------ #
+
+    # Clinical findings to scan for in general-query mode
+    _SCAN_FINDINGS = [
+        "cardiomegaly", "pleural effusion", "pneumothorax",
+        "consolidation", "atelectasis", "edema", "pulmonary edema",
+        "opacity", "opacities", "pneumonia", "mass", "nodule",
+        "fracture", "emphysema", "fibrosis", "calcification",
+        "hilar prominence", "mediastinal widening", "aortic",
+        "pericardial effusion", "interstitial", "infiltrate",
+        "hyperinflation", "scoliosis", "degenerative",
+    ]
+
+    def _extract_all_findings_scan(
+        self,
+        docs: List[RetrievedDocument],
+    ) -> Tuple[List[ExtractedFinding], List[str]]:
+        """
+        Scan all reports for ALL clinical findings (general query mode).
+
+        Instead of searching for one specific topic, this method scans
+        every report for every known clinical finding, classifies each
+        as present/absent, and returns all findings.
+
+        Used when _extract_topic returns "__GENERAL__".
+
+        Returns:
+            (all_findings, additional_summary_lines)
+        """
+        all_findings = []
+        finding_counts: Dict[str, Dict[str, int]] = {}
+        # finding_counts[finding] = {"present": N, "absent": N}
+
+        for doc in docs:
+            report_text = self._get_report_text(doc)
+            report_lower = report_text.lower()
+
+            for finding in self._SCAN_FINDINGS:
+                if finding in report_lower:
+                    sentence = self._get_sentence_with_topic(
+                        report_text, finding
+                    )
+                    is_neg = self._is_negated(sentence, finding)
+
+                    all_findings.append(ExtractedFinding(
+                        text=sentence.strip(),
+                        doc_id=doc.doc_id,
+                        score=doc.score,
+                        is_negated=is_neg,
+                        source_field="report",
+                    ))
+
+                    if finding not in finding_counts:
+                        finding_counts[finding] = {
+                            "present": 0, "absent": 0
+                        }
+                    if is_neg:
+                        finding_counts[finding]["absent"] += 1
+                    else:
+                        finding_counts[finding]["present"] += 1
+
+        # Build additional summary lines
+        additional = []
+        for finding, counts in sorted(
+            finding_counts.items(),
+            key=lambda x: x[1]["present"],
+            reverse=True,
+        ):
+            total_mentions = counts["present"] + counts["absent"]
+            if counts["present"] > 0:
+                additional.append(
+                    f"{finding.title()} PRESENT in "
+                    f"{counts['present']}/{len(docs)} reports"
+                )
+            elif counts["absent"] > 0 and total_mentions >= 2:
+                additional.append(
+                    f"{finding.title()} ABSENT in "
+                    f"{counts['absent']}/{len(docs)} reports"
+                )
+
+        logger.info(
+            f"  Full-scan: {len(all_findings)} findings across "
+            f"{len(finding_counts)} categories from {len(docs)} reports"
+        )
+
+        return all_findings, additional[:10]
 
     # ------------------------------------------------------------------ #
     #  Additional findings                                                 #

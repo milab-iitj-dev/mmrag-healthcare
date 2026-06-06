@@ -185,36 +185,45 @@ class RAGGenerator:
             image_source = "retrieved"
 
         if llava_image is None:
-            logger.error("  No image available for VLM")
-            return RAGOutput(
-                answer=(
-                    "[Error: No image available for visual "
-                    "question answering]"
-                ),
-                retrieved_docs=retrieved_docs,
-                context_text=context_text,
-                evidence_summary=evidence_summary,
-                query=query,
-                retrieval_time_sec=round(retrieval_time, 2),
-                total_time_sec=round(time.time() - total_start, 2),
-                metadata={"error": "no_image"},
-            )
+            # ========================================================
+            # TEXT-ONLY PATH: No image available.
+            # Use evidence aggregation to answer directly.
+            # Still run grounding + confidence for consistency.
+            # ========================================================
+            logger.info("  [3/6] No image — using text-only evidence path")
 
-        # ============================================================
-        # Step 5: Generate answer with VLM
-        # ============================================================
-        generation_start = time.time()
-        vlm_output = self.vlm.generate(
-            image=llava_image,
-            question=query,
-            context=context_text,
-            max_new_tokens=max_new_tokens,
-        )
-        generation_time = time.time() - generation_start
-        logger.info(
-            f"  [3/6] Generated: '{vlm_output.answer[:100]}...' "
-            f"in {generation_time:.2f}s"
-        )
+            text_answer = self._generate_text_only_answer(
+                evidence_summary, query
+            )
+            generation_time = 0.0
+            vlm_output = VLMOutput(
+                answer=text_answer,
+                raw_output=text_answer,
+                generation_time_sec=0.0,
+                input_token_count=0,
+                output_token_count=len(text_answer.split()),
+                metadata={
+                    "model": "text-only-evidence",
+                    "path": "text_only",
+                },
+            )
+            image_source = "none"
+        else:
+            # ========================================================
+            # IMAGE PATH: Generate answer with VLM
+            # ========================================================
+            generation_start = time.time()
+            vlm_output = self.vlm.generate(
+                image=llava_image,
+                question=query,
+                context=context_text,
+                max_new_tokens=max_new_tokens,
+            )
+            generation_time = time.time() - generation_start
+            logger.info(
+                f"  [3/6] Generated: '{vlm_output.answer[:100]}...' "
+                f"in {generation_time:.2f}s"
+            )
 
         # ============================================================
         # Step 6: Verify grounding
@@ -277,7 +286,109 @@ class RAGGenerator:
                 "was_corrected": grounding_result.was_corrected,
                 "confidence_level": confidence.level,
                 "confidence_score": confidence.score,
+                "generation_path": (
+                    "text_only" if llava_image is None else "vlm"
+                ),
             },
+        )
+
+    # ------------------------------------------------------------------ #
+    #  Text-only answer generation (no VLM needed)                         #
+    # ------------------------------------------------------------------ #
+
+    def _generate_text_only_answer(
+        self,
+        evidence_summary: EvidenceSummary,
+        question: str,
+    ) -> str:
+        """
+        Generate an answer from evidence alone (no image, no VLM).
+
+        Used when:
+          - User submits a text-only query (no --query-image)
+          - Retrieved documents don't have loadable images
+
+        Strategy:
+          - Yes/no questions with consensus → direct YES/NO answer
+          - General questions → formatted evidence summary
+          - Insufficient evidence → explicit statement
+
+        Args:
+            evidence_summary: Structured evidence from aggregator.
+            question:         The clinical question.
+
+        Returns:
+            Natural language answer string.
+        """
+        topic = evidence_summary.question_topic
+        consensus = evidence_summary.consensus
+        q_lower = question.lower().strip()
+
+        # Detect yes/no question pattern
+        is_yes_no = any(
+            q_lower.startswith(p)
+            for p in ["is there", "are there", "does", "do ", "has ", "is the"]
+        )
+
+        if is_yes_no and consensus in (
+            "UNANIMOUS_ABSENT", "MAJORITY_ABSENT"
+        ):
+            answer = (
+                f"NO. Based on {evidence_summary.num_absent}/"
+                f"{evidence_summary.total_reports} retrieved reports, "
+                f"{topic} is absent."
+            )
+            if evidence_summary.relevant_findings:
+                sample = evidence_summary.relevant_findings[0]
+                answer += f' Evidence: "{sample.text}"'
+            return answer
+
+        if is_yes_no and consensus in (
+            "UNANIMOUS_PRESENT", "MAJORITY_PRESENT"
+        ):
+            answer = (
+                f"YES. Based on {evidence_summary.num_present}/"
+                f"{evidence_summary.total_reports} retrieved reports, "
+                f"{topic} is present."
+            )
+            if evidence_summary.relevant_findings:
+                sample = evidence_summary.relevant_findings[0]
+                answer += f' Evidence: "{sample.text}"'
+            return answer
+
+        if is_yes_no and "MIXED" in consensus:
+            answer = (
+                f"UNCERTAIN. Evidence is mixed — "
+                f"{evidence_summary.num_present} reports indicate presence, "
+                f"{evidence_summary.num_absent} indicate absence of {topic}."
+            )
+            return answer
+
+        # General / descriptive question → return evidence summary
+        if evidence_summary.relevant_findings:
+            parts = [
+                f"Based on {evidence_summary.total_reports} "
+                f"retrieved reports:"
+            ]
+            seen = set()
+            for f in evidence_summary.relevant_findings:
+                if f.text not in seen:
+                    status = "ABSENT" if f.is_negated else "PRESENT"
+                    parts.append(
+                        f"- {f.text} ({status}, report {f.doc_id})"
+                    )
+                    seen.add(f.text)
+            if evidence_summary.additional_findings:
+                parts.append("\nAdditional findings:")
+                for af in evidence_summary.additional_findings:
+                    parts.append(f"- {af}")
+            return "\n".join(parts)
+
+        # Insufficient evidence
+        return (
+            f"Insufficient evidence. {evidence_summary.total_reports} "
+            f"reports were retrieved but none clearly address "
+            f"'{topic}'. An image may be needed for visual assessment."
         )
 
     # ------------------------------------------------------------------ #
