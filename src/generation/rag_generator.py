@@ -3,16 +3,17 @@ RAG-augmented generation engine — Phase 4 (Grounded).
 
 Orchestrates the full grounded retrieval-augmented generation pipeline:
     1. Receive question (+ optional query image)
-    2. Retrieve relevant evidence from ColQwen2 index
-    3. Aggregate evidence into structured summary
-    4. Build grounding-focused prompt
-    5. Generate answer with Qwen2.5-VL
-    6. Verify answer against evidence (grounding check)
-    7. Score confidence
-    8. Return answer with full provenance
+    2. Classify query type (binary / descriptive / text-only / mixed)
+    3. Retrieve relevant evidence from ColQwen2 index
+    4. Aggregate evidence (consensus for binary, full-scan for descriptive)
+    5. Build query-type-aware prompt
+    6. Generate answer with Qwen2-VL
+    7. Verify answer against evidence (grounding check)
+    8. Score confidence
+    9. Return answer with full provenance
 
 Pipeline:
-    Retrieval → Evidence Aggregation → Prompt → VLM → Verification →
+    Classify → Retrieve → Aggregate → Prompt → VLM → Verify →
     Confidence → Final Output
 """
 
@@ -26,6 +27,9 @@ from src.generation.base_generator import BaseVLM, VLMOutput
 from src.retrieval.base_retriever import BaseRetriever, RetrievedDocument
 from src.context.context_builder import ContextBuilder
 from src.context.evidence_aggregator import EvidenceAggregator, EvidenceSummary
+from src.context.query_classifier import (
+    QueryClassifier, QueryType, QueryClassification,
+)
 from src.generation.grounding import GroundingVerifier, GroundingResult
 from src.generation.confidence import ConfidenceEstimator, ConfidenceResult
 from src.utils.logging_utils import setup_logger
@@ -107,6 +111,7 @@ class RAGGenerator:
         self.confidence_estimator = (
             confidence_estimator or ConfidenceEstimator()
         )
+        self.query_classifier = QueryClassifier()
         self.top_k = top_k
 
     # ------------------------------------------------------------------ #
@@ -141,7 +146,20 @@ class RAGGenerator:
         logger.info(f"Grounded RAG: query='{query[:80]}' top_k={k}")
 
         # ============================================================
-        # Step 1: Retrieve relevant documents
+        # Step 1: Classify query type
+        # ============================================================
+        classification = self.query_classifier.classify(
+            query=query,
+            has_image=query_image is not None,
+        )
+        query_type = classification.query_type
+        logger.info(
+            f"  [1/7] Query type: {query_type.value} "
+            f"(topic={classification.detected_topic})"
+        )
+
+        # ============================================================
+        # Step 2: Retrieve relevant documents
         # ============================================================
         retrieval_start = time.time()
         retrieved_docs = self.retriever.retrieve(
@@ -151,29 +169,28 @@ class RAGGenerator:
         )
         retrieval_time = time.time() - retrieval_start
         logger.info(
-            f"  [1/6] Retrieval: {len(retrieved_docs)} docs "
+            f"  [2/7] Retrieval: {len(retrieved_docs)} docs "
             f"in {retrieval_time:.2f}s"
         )
 
         # ============================================================
-        # Step 2: Aggregate evidence
+        # Step 3: Aggregate evidence (query-type aware)
         # ============================================================
         evidence_summary = self.evidence_aggregator.aggregate(
-            retrieved_docs, query
+            retrieved_docs, query, query_type=query_type
         )
         logger.info(
-            f"  [2/6] Evidence: consensus={evidence_summary.consensus}, "
+            f"  [3/7] Evidence: consensus={evidence_summary.consensus}, "
             f"findings={len(evidence_summary.relevant_findings)}"
         )
 
         # ============================================================
-        # Step 3: Build context for VLM
+        # Step 4: Build context for VLM
         # ============================================================
-        # Use aggregated evidence instead of raw report dump
         context_text = evidence_summary.formatted_text
 
         # ============================================================
-        # Step 4: Select image for VLM
+        # Step 5: Select image and generate answer
         # ============================================================
         if query_image is not None:
             llava_image = query_image
@@ -185,15 +202,11 @@ class RAGGenerator:
             image_source = "retrieved"
 
         if llava_image is None:
-            # ========================================================
-            # TEXT-ONLY PATH: No image available.
-            # Use evidence aggregation to answer directly.
-            # Still run grounding + confidence for consistency.
-            # ========================================================
-            logger.info("  [3/6] No image — using text-only evidence path")
+            # ── TEXT-ONLY PATH ──
+            logger.info("  [4/7] No image — using text-only evidence path")
 
             text_answer = self._generate_text_only_answer(
-                evidence_summary, query
+                evidence_summary, query, query_type
             )
             generation_time = 0.0
             vlm_output = VLMOutput(
@@ -205,43 +218,44 @@ class RAGGenerator:
                 metadata={
                     "model": "text-only-evidence",
                     "path": "text_only",
+                    "query_type": query_type.value,
                 },
             )
             image_source = "none"
         else:
-            # ========================================================
-            # IMAGE PATH: Generate answer with VLM
-            # ========================================================
+            # ── IMAGE PATH: Generate answer with VLM ──
             generation_start = time.time()
             vlm_output = self.vlm.generate(
                 image=llava_image,
                 question=query,
                 context=context_text,
                 max_new_tokens=max_new_tokens,
+                query_type=query_type,
             )
             generation_time = time.time() - generation_start
             logger.info(
-                f"  [3/6] Generated: '{vlm_output.answer[:100]}...' "
+                f"  [4/7] Generated: '{vlm_output.answer[:100]}...' "
                 f"in {generation_time:.2f}s"
             )
 
         # ============================================================
-        # Step 6: Verify grounding
+        # Step 6: Verify grounding (query-type aware)
         # ============================================================
         grounding_result = self.grounding_verifier.verify(
             answer=vlm_output.answer,
             evidence_summary=evidence_summary,
             question=query,
+            query_type=query_type,
         )
 
         if grounding_result.was_corrected:
             logger.info(
-                f"  [4/6] CORRECTED: {grounding_result.correction_reason}"
+                f"  [5/7] CORRECTED: {grounding_result.correction_reason}"
             )
             final_answer = grounding_result.verified_answer
         else:
             logger.info(
-                f"  [4/6] Grounding: "
+                f"  [5/7] Grounding: "
                 f"{'PASS' if grounding_result.is_grounded else 'FLAG'}"
             )
             final_answer = grounding_result.verified_answer
@@ -255,14 +269,14 @@ class RAGGenerator:
             retrieved_docs=retrieved_docs,
         )
         logger.info(
-            f"  [5/6] Confidence: {confidence.level} ({confidence.score})"
+            f"  [6/7] Confidence: {confidence.level} ({confidence.score})"
         )
 
         # ============================================================
         # Step 8: Assemble final output
         # ============================================================
         total_time = time.time() - total_start
-        logger.info(f"  [6/6] Total: {total_time:.2f}s")
+        logger.info(f"  [7/7] Total: {total_time:.2f}s")
 
         return RAGOutput(
             answer=final_answer,
@@ -280,8 +294,10 @@ class RAGGenerator:
                 "top_k": k,
                 "num_retrieved": len(retrieved_docs),
                 "context_length": len(context_text),
+                "query_type": query_type.value,
                 "query_has_image": query_image is not None,
                 "image_source": image_source,
+                "detected_topic": classification.detected_topic,
                 "consensus": evidence_summary.consensus,
                 "was_corrected": grounding_result.was_corrected,
                 "confidence_level": confidence.level,
@@ -300,37 +316,31 @@ class RAGGenerator:
         self,
         evidence_summary: EvidenceSummary,
         question: str,
+        query_type: QueryType = QueryType.TEXT_ONLY,
     ) -> str:
         """
         Generate an answer from evidence alone (no image, no VLM).
 
-        Used when:
-          - User submits a text-only query (no --query-image)
-          - Retrieved documents don't have loadable images
-
-        Strategy:
-          - Yes/no questions with consensus → direct YES/NO answer
-          - General questions → formatted evidence summary
+        Uses the QueryType to determine answer format:
+          - BINARY_CLINICAL → direct YES/NO with cited evidence
+          - DESCRIPTIVE / MIXED → structured evidence listing
           - Insufficient evidence → explicit statement
 
         Args:
             evidence_summary: Structured evidence from aggregator.
             question:         The clinical question.
+            query_type:       Classification from QueryClassifier.
 
         Returns:
             Natural language answer string.
         """
         topic = evidence_summary.question_topic
         consensus = evidence_summary.consensus
-        q_lower = question.lower().strip()
 
-        # Detect yes/no question pattern
-        is_yes_no = any(
-            q_lower.startswith(p)
-            for p in ["is there", "are there", "does", "do ", "has ", "is the"]
-        )
+        # ── BINARY CLINICAL: YES/NO answer ──
+        is_binary = query_type == QueryType.BINARY_CLINICAL
 
-        if is_yes_no and consensus in (
+        if is_binary and consensus in (
             "UNANIMOUS_ABSENT", "MAJORITY_ABSENT"
         ):
             answer = (
@@ -343,7 +353,7 @@ class RAGGenerator:
                 answer += f' Evidence: "{sample.text}"'
             return answer
 
-        if is_yes_no and consensus in (
+        if is_binary and consensus in (
             "UNANIMOUS_PRESENT", "MAJORITY_PRESENT"
         ):
             answer = (
@@ -356,15 +366,14 @@ class RAGGenerator:
                 answer += f' Evidence: "{sample.text}"'
             return answer
 
-        if is_yes_no and "MIXED" in consensus:
-            answer = (
+        if is_binary and "MIXED" in consensus:
+            return (
                 f"UNCERTAIN. Evidence is mixed — "
                 f"{evidence_summary.num_present} reports indicate presence, "
                 f"{evidence_summary.num_absent} indicate absence of {topic}."
             )
-            return answer
 
-        # General / descriptive question → return evidence summary
+        # ── DESCRIPTIVE / MIXED / GENERAL: evidence listing ──
         if evidence_summary.relevant_findings:
             parts = [
                 f"Based on {evidence_summary.total_reports} "
@@ -384,7 +393,7 @@ class RAGGenerator:
                     parts.append(f"- {af}")
             return "\n".join(parts)
 
-        # Insufficient evidence
+        # ── Insufficient evidence ──
         return (
             f"Insufficient evidence. {evidence_summary.total_reports} "
             f"reports were retrieved but none clearly address "

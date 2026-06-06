@@ -97,14 +97,22 @@ class GroundingVerifier:
         answer: str,
         evidence_summary: Optional[EvidenceSummary] = None,
         question: str = "",
+        query_type=None,
     ) -> GroundingResult:
         """
         Verify that the answer is grounded in evidence.
+
+        For BINARY_CLINICAL queries: checks YES/NO direction against
+        evidence consensus and corrects contradictions.
+
+        For DESCRIPTIVE_IMAGE queries: skips direction checking since
+        descriptive answers have no binary direction to verify.
 
         Args:
             answer:           The VLM's generated answer.
             evidence_summary: The structured evidence from aggregator.
             question:         The original question.
+            query_type:       QueryType from the classifier.
 
         Returns:
             GroundingResult with verification details.
@@ -114,6 +122,27 @@ class GroundingVerifier:
                 original_answer=answer,
                 verified_answer=answer,
                 is_grounded=True,  # no evidence to contradict
+            )
+
+        # For descriptive queries, skip YES/NO direction checking.
+        # Descriptive answers are open-ended — checking binary direction
+        # would produce false contradiction signals.
+        from src.context.query_classifier import QueryType
+
+        if query_type in (QueryType.DESCRIPTIVE_IMAGE, QueryType.MIXED_IMAGE_TEXT):
+            logger.info(
+                f"Grounding check: SKIP direction check "
+                f"(query_type={query_type.value})"
+            )
+            return GroundingResult(
+                original_answer=answer,
+                verified_answer=answer,
+                is_grounded=True,
+                grounding_details={
+                    "query_type": query_type.value,
+                    "skip_reason": "descriptive query — no binary direction",
+                    "consensus": evidence_summary.consensus,
+                },
             )
 
         # Step 1: Detect answer direction (yes/no/neutral)

@@ -149,15 +149,17 @@ class Qwen2VLModel(BaseVLM):
         question: str,
         context: Optional[str] = None,
         max_new_tokens: int = 512,
+        **kwargs,
     ) -> VLMOutput:
-        """Generate answer from image + question using Qwen2.5-VL."""
+        """Generate answer from image + question using Qwen2-VL."""
         if not self._loaded:
             raise RuntimeError("Model not loaded. Call load() first.")
 
         gen_cfg = self._config["model"].get("generation", {})
+        query_type = kwargs.get("query_type", None)
 
-        # Build the chat messages
-        messages = self._build_messages(question, context)
+        # Build the chat messages (query-type aware)
+        messages = self._build_messages(question, context, query_type)
 
         # Process inputs using the chat template
         prompt = self._processor.apply_chat_template(
@@ -262,21 +264,24 @@ class Qwen2VLModel(BaseVLM):
         self,
         question: str,
         context: Optional[str] = None,
+        query_type=None,
     ) -> List[Dict[str, Any]]:
         """
-        Build Qwen2.5-VL chat messages.
+        Build Qwen2-VL chat messages with query-type-aware prompting.
 
         Creates a structured conversation with:
           1. System message: grounding rules
           2. User message: image + evidence + question
 
-        This is a SINGLE prompt construction — no double-wrapping.
-        The system prompt establishes grounding rules, and the user
-        message contains the evidence and question cleanly separated.
+        The instruction suffix changes based on query_type:
+          - binary_clinical  → "Start with YES or NO"
+          - descriptive      → "Describe all findings systematically"
+          - mixed/default    → "Provide a detailed clinical answer"
 
         Args:
-            question: The clinical question.
-            context:  Optional evidence summary from the aggregator.
+            question:   The clinical question.
+            context:    Optional evidence summary from the aggregator.
+            query_type: QueryType enum from the classifier.
 
         Returns:
             List of message dicts for the chat template.
@@ -288,8 +293,11 @@ class Qwen2VLModel(BaseVLM):
         # Build user message content (multimodal: image + text)
         user_content = []
 
-        # Image (Qwen2.5-VL uses a content list with type markers)
+        # Image placeholder (processor handles actual injection)
         user_content.append({"type": "image", "image": "placeholder"})
+
+        # Select instruction suffix based on query type
+        instruction = self._get_instruction_for_query_type(query_type)
 
         # Evidence block (if available)
         if context:
@@ -297,14 +305,12 @@ class Qwen2VLModel(BaseVLM):
                 "RETRIEVED EVIDENCE FROM SIMILAR CASES:\n",
                 context,
                 "\n\nQUESTION: " + question,
-                "\n\nProvide your answer. Start with a direct YES or NO "
-                "if the question is a yes/no type. Then explain your "
-                "reasoning, citing specific evidence.",
+                "\n\n" + instruction,
             ]
         else:
             text_parts = [
                 "QUESTION: " + question,
-                "\n\nProvide a detailed clinical answer based on the image.",
+                "\n\n" + instruction,
             ]
 
         user_content.append({
@@ -315,6 +321,45 @@ class Qwen2VLModel(BaseVLM):
         messages.append({"role": "user", "content": user_content})
 
         return messages
+
+    def _get_instruction_for_query_type(self, query_type) -> str:
+        """
+        Get the generation instruction based on query type.
+
+        This is the key routing point — descriptive queries get
+        a different instruction than binary clinical queries.
+        """
+        # Import here to avoid circular imports
+        from src.context.query_classifier import QueryType
+
+        if query_type == QueryType.BINARY_CLINICAL:
+            return (
+                "Provide your answer. Start with a direct YES or NO. "
+                "Then explain your reasoning, citing specific evidence."
+            )
+
+        if query_type == QueryType.DESCRIPTIVE_IMAGE:
+            return (
+                "Describe all clinically significant findings visible "
+                "in this image. Structure your response as:\n"
+                "1. Primary findings (most significant abnormalities)\n"
+                "2. Secondary findings\n"
+                "3. Normal structures\n"
+                "Reference the retrieved evidence where relevant."
+            )
+
+        if query_type == QueryType.MIXED_IMAGE_TEXT:
+            return (
+                "Provide a detailed clinical answer based on both "
+                "the image and the retrieved evidence. "
+                "Cite specific evidence to support your observations."
+            )
+
+        # Default / TEXT_ONLY / unknown
+        return (
+            "Provide a detailed clinical answer based on the image. "
+            "Cite specific evidence to support your answer."
+        )
 
     # ------------------------------------------------------------------ #
     #  Adapter support (future QLoRA fine-tuning)                          #

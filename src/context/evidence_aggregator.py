@@ -181,6 +181,7 @@ class EvidenceAggregator:
         self,
         retrieved_docs: List[RetrievedDocument],
         question: str,
+        query_type=None,
     ) -> EvidenceSummary:
         """
         Aggregate retrieved documents into a structured evidence summary.
@@ -188,6 +189,8 @@ class EvidenceAggregator:
         Args:
             retrieved_docs: List of RetrievedDocument from the retriever.
             question:       The clinical question being asked.
+            query_type:     Optional QueryType from the classifier.
+                            If DESCRIPTIVE_IMAGE, uses full-scan mode.
 
         Returns:
             EvidenceSummary with consensus analysis and formatted text.
@@ -200,13 +203,22 @@ class EvidenceAggregator:
                 formatted_text="No evidence retrieved.",
             )
 
-        # Step 1: Extract the topic from the question
+        # Step 1: Determine aggregation mode.
+        # Primary signal: query_type from the classifier.
+        # Fallback: _extract_topic's __GENERAL__ detection.
+        from src.context.query_classifier import QueryType
+
         topic = self._extract_topic(question)
         logger.info(f"Evidence aggregation: topic='{topic}' from '{question}'")
 
-        # Step 2: Extract findings — different strategy for general vs specific
-        if topic == "__GENERAL__":
-            # GENERAL QUERY: scan all reports for ALL clinical findings
+        use_full_scan = (
+            topic == "__GENERAL__"
+            or query_type == QueryType.DESCRIPTIVE_IMAGE
+        )
+
+        # Step 2: Extract findings — different strategy per mode
+        if use_full_scan:
+            # DESCRIPTIVE / GENERAL: scan all reports for ALL findings
             all_findings, additional = self._extract_all_findings_scan(
                 retrieved_docs
             )

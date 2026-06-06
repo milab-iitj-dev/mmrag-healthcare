@@ -63,6 +63,7 @@ class BaseVLM(ABC):
         question: str,
         context: Optional[str] = None,
         max_new_tokens: int = 512,
+        **kwargs,
     ) -> VLMOutput:
         """
         Generate an answer from image + question.
@@ -72,6 +73,7 @@ class BaseVLM(ABC):
             question:       The clinical question.
             context:        Optional retrieved evidence text (Phase 2+).
             max_new_tokens: Maximum tokens to generate.
+            **kwargs:       Additional params (e.g. query_type for routing).
 
         Returns:
             VLMOutput with the generated answer and metadata.
