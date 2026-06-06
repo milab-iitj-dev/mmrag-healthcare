@@ -15,20 +15,37 @@ Usage:
 
 import json
 import time
+import shutil
 import argparse
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
 from PIL import Image
 
+# ── Clean __pycache__ to prevent stale bytecode on HPC ──
+for _cache_dir in Path("evaluation").rglob("__pycache__"):
+    shutil.rmtree(_cache_dir, ignore_errors=True)
+
 from src.embeddings.colqwen2_embedder import ColQwen2Embedder
 from src.retrieval.colqwen2_retriever import ColQwen2Retriever
 from src.retrieval.hybrid_retriever import HybridRetriever
 from evaluation.datasets.openi_test_builder import OpenITestBuilder
-from evaluation.metrics.retrieval_metrics import compute_retrieval_metrics
+from evaluation.metrics.retrieval_metrics import (
+    compute_retrieval_metrics,
+    hit_at_k,
+)
 from src.utils.logging_utils import setup_logger
 
 logger = setup_logger("benchmark.retrieval")
+
+# ── Sanity check: verify hit_at_k is binary, not set-overlap ──
+_test_hit = hit_at_k(["a"], ["a", "b", "c"], k=1)
+assert _test_hit == 1.0, (
+    f"FATAL: hit_at_k returned {_test_hit}, expected 1.0. "
+    f"Stale __pycache__ may be loaded. Delete all __pycache__ dirs and retry."
+)
+logger.info("Metric sanity check passed: hit_at_k is binary Hit@k")
+
 
 
 def run_retrieval_benchmark(
