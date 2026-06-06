@@ -68,10 +68,10 @@ class VQARADLoader:
         # Parse entries
         for entry in raw_data:
             qid = str(entry.get("qid", ""))
-            question = (entry.get("question", "") or "").strip()
-            answer = (entry.get("answer", "") or "").strip()
-            image_name = (entry.get("image_name", "") or "").strip()
-            answer_type = (entry.get("answer_type", "") or "").strip().upper()
+            question = str(entry.get("question", "") or "").strip()
+            answer = str(entry.get("answer", "") or "").strip()
+            image_name = str(entry.get("image_name", "") or "").strip()
+            answer_type = str(entry.get("answer_type", "") or "").strip().upper()
 
             if not question or not answer:
                 continue
@@ -163,7 +163,7 @@ class VQARADLoader:
             # Use 'freeform' entries as test (standard VQA-RAD practice)
             test = [
                 s for s in self._samples
-                if s["metadata"].get("phrase_type", "").lower() == "freeform"
+                if str(s["metadata"].get("phrase_type", "")).lower() == "freeform"
             ]
             if test:
                 logger.info(
