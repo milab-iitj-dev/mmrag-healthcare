@@ -5,11 +5,20 @@ Runs the current retriever (HybridRetriever with ColQwen2 + RRF)
 against gold-labeled queries and computes Recall@k, MRR, nDCG.
 
 Usage:
+    # Default (50 queries, unbalanced):
     python -m evaluation.runners.retrieval_benchmark \\
         --retrieval-config configs/retrieval_config.yaml \\
         --data-config configs/data_config.yaml \\
         --index-dir data/indexes/colqwen2_index \\
         --max-queries 50 \\
+        --output-dir outputs/benchmarks/retrieval
+
+    # Balanced (40 per mode = 120 total):
+    python -m evaluation.runners.retrieval_benchmark \\
+        --retrieval-config configs/retrieval_config.yaml \\
+        --data-config configs/data_config.yaml \\
+        --index-dir data/indexes/colqwen2_index \\
+        --queries-per-mode 40 \\
         --output-dir outputs/benchmarks/retrieval
 """
 
@@ -17,6 +26,7 @@ import json
 import time
 import shutil
 import argparse
+import random
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
@@ -55,6 +65,7 @@ def run_retrieval_benchmark(
     max_queries: int = 50,
     top_k_values: List[int] = None,
     query_modes: List[str] = None,
+    queries_per_mode: Optional[int] = None,
     output_dir: str = "outputs/benchmarks/retrieval",
 ) -> Dict[str, Any]:
     """
@@ -115,15 +126,56 @@ def run_retrieval_benchmark(
     )
     builder.load()
 
+    # Build a generous pool of queries — we'll balance/cap afterwards
+    pool_size = (
+        queries_per_mode * 3 if queries_per_mode
+        else max_queries // len(query_modes)
+    )
     queries = builder.build_test_queries(
-        max_queries_per_finding=max_queries // len(query_modes),
+        max_queries_per_finding=max(pool_size, 20),
         query_modes=query_modes,
     )
 
-    if max_queries and len(queries) > max_queries:
+    # ── Balance per mode (if queries_per_mode is set) ──
+    if queries_per_mode:
+        rng = random.Random(42)
+        by_mode: Dict[str, list] = {m: [] for m in query_modes}
+        for q in queries:
+            m = q["query_mode"]
+            if m in by_mode:
+                by_mode[m].append(q)
+
+        balanced = []
+        for mode in query_modes:
+            pool = by_mode[mode]
+            rng.shuffle(pool)
+            selected = pool[:queries_per_mode]
+            balanced.extend(selected)
+            logger.info(
+                f"  Mode '{mode}': {len(selected)}/{len(pool)} queries selected"
+            )
+            if len(selected) < queries_per_mode:
+                logger.warning(
+                    f"  Only {len(selected)} '{mode}' queries available "
+                    f"(requested {queries_per_mode})"
+                )
+        rng.shuffle(balanced)
+        queries = balanced
+        logger.info(
+            f"Balanced query set: {len(queries)} total "
+            f"({queries_per_mode} per mode x {len(query_modes)} modes)"
+        )
+    elif max_queries and len(queries) > max_queries:
         queries = queries[:max_queries]
 
-    logger.info(f"Running {len(queries)} retrieval queries (top_k={max_k})")
+    # Log mode distribution
+    mode_dist = {}
+    for q in queries:
+        mode_dist[q["query_mode"]] = mode_dist.get(q["query_mode"], 0) + 1
+    logger.info(
+        f"Running {len(queries)} retrieval queries (top_k={max_k}): "
+        + ", ".join(f"{m}={c}" for m, c in sorted(mode_dist.items()))
+    )
 
     # ── Step 3: Run retriever ──
     eval_results = []
@@ -284,6 +336,15 @@ def main():
     )
     parser.add_argument("--index-dir", default="data/indexes/colqwen2_index")
     parser.add_argument("--max-queries", type=int, default=50)
+    parser.add_argument(
+        "--queries-per-mode", type=int, default=None,
+        help=(
+            "If set, sample exactly this many queries per mode "
+            "(e.g., --queries-per-mode 40 gives 40 text_only + "
+            "40 image_only + 40 hybrid = 120 balanced). "
+            "Overrides --max-queries."
+        ),
+    )
     parser.add_argument("--output-dir", default="outputs/benchmarks/retrieval")
     args = parser.parse_args()
 
@@ -297,6 +358,7 @@ def main():
         data_config=data_config,
         index_dir=args.index_dir,
         max_queries=args.max_queries,
+        queries_per_mode=args.queries_per_mode,
         output_dir=args.output_dir,
     )
 

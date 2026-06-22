@@ -31,12 +31,13 @@ set -euo pipefail
 # ── Configuration ──
 PROJECT_DIR="/scratch/data/divyasaxena_rs/Gokul_Faleja_internship"
 INDEX_DIR="data/indexes/colqwen2_index"
-MAX_QUERIES=50
+QUERIES_PER_MODE=40          # 40 text_only + 40 image_only + 40 hybrid = 120 balanced
 OUTPUT_DIR="outputs/benchmarks/retrieval"
 
 echo "============================================================"
-echo "  Healthcare MRAG — OpenI Retrieval Benchmark"
+echo "  Healthcare MRAG — OpenI Retrieval Benchmark (Balanced)"
 echo "  $(date)"
+echo "  Mode: ${QUERIES_PER_MODE} queries per mode (balanced)"
 echo "============================================================"
 
 # ── 1. Navigate to project directory ──
@@ -96,12 +97,13 @@ else
     exit 1
 fi
 
-# ── 6. Run the retrieval benchmark ──
+# ── 6. Run the retrieval benchmark (balanced) ──
 echo ""
-echo "[6/7] Running retrieval benchmark..."
-echo "  Index:       $INDEX_DIR"
-echo "  Max queries: $MAX_QUERIES"
-echo "  Output:      $OUTPUT_DIR"
+echo "[6/7] Running BALANCED retrieval benchmark..."
+echo "  Index:           $INDEX_DIR"
+echo "  Queries/mode:    $QUERIES_PER_MODE"
+echo "  Total queries:   $((QUERIES_PER_MODE * 3)) (text_only + image_only + hybrid)"
+echo "  Output:          $OUTPUT_DIR"
 echo ""
 
 mkdir -p "$OUTPUT_DIR"
@@ -111,7 +113,7 @@ python -m evaluation.runners.retrieval_benchmark \
     --retrieval-config configs/retrieval_config.yaml \
     --data-config configs/data_config.yaml \
     --index-dir "$INDEX_DIR" \
-    --max-queries "$MAX_QUERIES" \
+    --queries-per-mode "$QUERIES_PER_MODE" \
     --output-dir "$OUTPUT_DIR"
 
 BENCH_EXIT=$?
