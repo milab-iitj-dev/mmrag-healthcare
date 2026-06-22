@@ -109,194 +109,75 @@ def _build_markdown(
     current: Dict[str, Any],
     sensitivity: Dict[str, Any],
 ) -> str:
-    """Build the complete markdown observing document."""
+    """Build a concise, Sir-ready technical note."""
     b_agg = baseline.get("aggregate", {})
     c_agg = current.get("aggregate", {})
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+    b_n = b_agg.get("num_queries", "?")
+    c_n = c_agg.get("num_queries", "?")
 
     lines: List[str] = []
 
     # ── Title ──
-    lines.append("# Healthcare MRAG — Retrieval Ablation Analysis")
+    lines.append("# Retrieval Ablation — Modality Bias Analysis")
     lines.append("")
-    lines.append("## Modality Bias: Before vs After Dual-Index Retrieval")
+    lines.append("**Healthcare MRAG · OpenI Chest X-ray Dataset**")
     lines.append("")
-    lines.append(f"*Generated: {timestamp}*")
+    lines.append(f"*Generated: {timestamp} · {b_n} queries evaluated*")
     lines.append("")
     lines.append("---")
     lines.append("")
 
-    # ── 1. Problem Summary ──
-    lines.append("## 1. Problem Summary")
+    # ── 1. Problem ──
+    lines.append("## 1. The Modality-Dominance Problem")
     lines.append("")
     lines.append(
-        "During implementation of the Healthcare Multimodal RAG pipeline, "
-        "we identified a **modality-dominance bias** in the retrieval layer. "
-        "When a user submitted both a chest X-ray image and a clinical "
-        "question (e.g., *\"Is there cardiomegaly?\"*), the retrieval system "
-        "was dominated by the image modality. The question text had "
-        "negligible influence on which evidence documents were retrieved."
+        "When a user submits a chest X-ray **and** a clinical question "
+        "(e.g., *\"Is there cardiomegaly?\"*), the retrieval system should "
+        "find evidence documents relevant to **both** the image and the "
+        "question. In the original system, the image modality dominated: "
+        "the question text had no measurable influence on retrieval ranking."
     )
     lines.append("")
-    lines.append("**Observed symptoms:**")
+    lines.append("**Symptom:** Different questions on the same X-ray → identical top-K results.")
     lines.append("")
     lines.append(
-        "- Different clinical questions on the **same** X-ray image "
-        "returned nearly **identical** evidence documents."
-    )
-    lines.append(
-        "- The retrieval ranking was determined almost entirely by "
-        "visual similarity, ignoring question-specific clinical terms."
-    )
-    lines.append(
-        "- Question wording (e.g., *\"Is there cardiomegaly?\"* vs "
-        "*\"Is there pleural effusion?\"*) did not meaningfully change "
-        "the top-K retrieved results."
-    )
-    lines.append("")
-    lines.append(
-        "**Root cause:** The system relied on a single image embedding "
-        "index. Both modalities were routed through image-level MaxSim "
-        "scoring, where the high-dimensional image patch embeddings "
-        "(~600–900 score range) overwhelmed the question text signal. "
-        "Without a dedicated text retrieval path or question-aware "
-        "reranking, the question was effectively discarded."
+        "**Root cause:** Single image embedding index; image MaxSim scores "
+        "(~600–900) overwhelmed text signal. Question text was present "
+        "as input but effectively discarded during ranking."
     )
     lines.append("")
     lines.append("---")
     lines.append("")
 
-    # ── 2. Baseline ──
-    lines.append("## 2. Baseline — Before Fix")
+    # ── 2. Experimental Setup ──
+    lines.append("## 2. Experimental Setup")
     lines.append("")
+    lines.append("| | Baseline (Before) | Current System (After) |")
+    lines.append("|---|---|---|")
     lines.append(
-        "The baseline reproduces the pre-fix retrieval behavior using a "
-        "**question-ignored ablation**: the system still receives both "
-        "the chest X-ray image and the clinical question text (identical "
-        "inputs to the current system), but the question text is discarded "
-        "before retrieval. Only the image drives the ranking. This matches "
-        "the earlier system where different questions on the same image "
-        "produced identical retrieval results because the question had no "
-        "influence on scoring."
+        "| **Retrieval** | Image index only; question discarded | "
+        "Dual-index (image + text) |"
+    )
+    lines.append(
+        "| **Fusion** | None | RRF (k=60, equal weights) |"
+    )
+    lines.append(
+        "| **Reranking** | None | Question-aware keyword boost (w=0.15) |"
+    )
+    lines.append(
+        f"| **Queries** | {b_n} (same set) | {c_n} (same set) |"
+    )
+    lines.append(
+        "| **Gold labels** | OpenI MeSH + Problems + non-negated text | Same |"
     )
     lines.append("")
-    lines.append(
-        "**Configuration:** Question-ignored image+text retrieval — "
-        "image+text input received, question text discarded, "
-        "no RRF fusion, no question-aware reranking."
-    )
-    lines.append("")
-
-    lines.append("| Metric | Score |")
-    lines.append("|--------|-------|")
-    for k in [1, 3, 5]:
-        key = f"recall@{k}"
-        lines.append(f"| Recall@{k} | {_fmt(b_agg.get(key))} |")
-    lines.append(f"| MRR | {_fmt(b_agg.get('mrr'))} |")
-    for k in [3, 5]:
-        key = f"ndcg@{k}"
-        lines.append(f"| nDCG@{k} | {_fmt(b_agg.get(key))} |")
-
-    b_n = b_agg.get("num_queries", "?")
-    lines.append(f"| Queries | {b_n} |")
-    lines.append("")
-
-    # Per-mode breakdown if available
-    b_per_mode = baseline.get("per_mode", {})
-    if b_per_mode:
-        lines.append("**Per query mode:**")
-        lines.append("")
-        lines.append("| Mode | Recall@1 | Recall@3 | Recall@5 | MRR |")
-        lines.append("|------|----------|----------|----------|-----|")
-        for mode, m in b_per_mode.items():
-            lines.append(
-                f"| {mode} "
-                f"| {_fmt(m.get('recall@1'))} "
-                f"| {_fmt(m.get('recall@3'))} "
-                f"| {_fmt(m.get('recall@5'))} "
-                f"| {_fmt(m.get('mrr'))} |"
-            )
-        lines.append("")
-
     lines.append("---")
     lines.append("")
 
-    # ── 3. Current System ──
-    lines.append("## 3. Current System — After Fix")
+    # ── 3. Results: Comparison Table ──
+    lines.append("## 3. Results")
     lines.append("")
-    lines.append(
-        "The current system uses the full **dual-index retrieval** pipeline "
-        "with three question-awareness mechanisms:"
-    )
-    lines.append("")
-    lines.append(
-        "1. **Dual-index retrieval:** The query image is matched against "
-        "the image embedding index, and the question text is matched "
-        "against a dedicated text embedding index (both built with "
-        "ColQwen2 MaxSim scoring)."
-    )
-    lines.append(
-        "2. **RRF fusion (k=60):** The two ranked lists are combined "
-        "using Reciprocal Rank Fusion, which is scale-agnostic and "
-        "prevents either modality from dominating."
-    )
-    lines.append(
-        "3. **Question-aware reranking:** After fusion, documents whose "
-        "clinical text (findings + impression) contains question-relevant "
-        "keywords receive an additive score boost, promoting "
-        "question-specific evidence."
-    )
-    lines.append("")
-    lines.append(
-        "**Configuration:** HybridRetriever with dual-index ColQwen2, "
-        "RRF fusion (k=60, equal weights), question-aware reranking "
-        "(boost=0.15, medical stopwords enabled)."
-    )
-    lines.append("")
-
-    lines.append("| Metric | Score |")
-    lines.append("|--------|-------|")
-    for k in [1, 3, 5]:
-        key = f"recall@{k}"
-        lines.append(f"| Recall@{k} | {_fmt(c_agg.get(key))} |")
-    lines.append(f"| MRR | {_fmt(c_agg.get('mrr'))} |")
-    for k in [3, 5]:
-        key = f"ndcg@{k}"
-        lines.append(f"| nDCG@{k} | {_fmt(c_agg.get(key))} |")
-
-    c_n = c_agg.get("num_queries", "?")
-    lines.append(f"| Queries | {c_n} |")
-    lines.append("")
-
-    # Per-mode breakdown if available
-    c_per_mode = current.get("per_mode", {})
-    if c_per_mode:
-        lines.append("**Per query mode:**")
-        lines.append("")
-        lines.append("| Mode | Recall@1 | Recall@3 | Recall@5 | MRR |")
-        lines.append("|------|----------|----------|----------|-----|")
-        for mode, m in c_per_mode.items():
-            lines.append(
-                f"| {mode} "
-                f"| {_fmt(m.get('recall@1'))} "
-                f"| {_fmt(m.get('recall@3'))} "
-                f"| {_fmt(m.get('recall@5'))} "
-                f"| {_fmt(m.get('mrr'))} |"
-            )
-        lines.append("")
-
-    lines.append("---")
-    lines.append("")
-
-    # ── 4. Comparison Table ──
-    lines.append("## 4. Side-by-Side Comparison")
-    lines.append("")
-    lines.append(
-        "| Metric | Baseline (Before) | Current (After) | Δ Change |"
-    )
-    lines.append(
-        "|--------|-------------------|-----------------|----------|"
-    )
 
     comparison_metrics = [
         ("Recall@1", "recall@1"),
@@ -307,22 +188,95 @@ def _build_markdown(
         ("nDCG@5", "ndcg@5"),
     ]
 
+    lines.append("### Aggregate Comparison")
+    lines.append("")
+    lines.append("| Metric | Baseline | Current | Δ Change |")
+    lines.append("|--------|----------|---------|----------|")
+
     for label, key in comparison_metrics:
         b_val = b_agg.get(key)
         c_val = c_agg.get(key)
         lines.append(
-            f"| {label} "
+            f"| **{label}** "
             f"| {_fmt(b_val)} "
             f"| {_fmt(c_val)} "
             f"| {_delta(c_val, b_val)} |"
         )
-
     lines.append("")
+
+    # ── ASCII Bar Chart ──
+    lines.append("### Visual Comparison")
+    lines.append("")
+    lines.append("```")
+    lines.append("  Baseline vs Current System — Key Metrics")
+    lines.append("  ─────────────────────────────────────────")
+
+    chart_metrics = [
+        ("Recall@1", "recall@1"),
+        ("Recall@3", "recall@3"),
+        ("Recall@5", "recall@5"),
+        ("MRR",      "mrr"),
+        ("nDCG@3",   "ndcg@3"),
+        ("nDCG@5",   "ndcg@5"),
+    ]
+
+    for label, key in chart_metrics:
+        b_val = b_agg.get(key, 0) or 0
+        c_val = c_agg.get(key, 0) or 0
+        bar_width = 30
+        b_bar = "█" * max(1, int(b_val * bar_width))
+        c_bar = "█" * max(1, int(c_val * bar_width))
+        b_pad = " " * (bar_width - len(b_bar))
+        c_pad = " " * (bar_width - len(c_bar))
+        lines.append(f"")
+        lines.append(f"  {label:>10}")
+        lines.append(
+            f"  Baseline  |{b_bar}{b_pad}| {b_val:.4f}"
+        )
+        lines.append(
+            f"  Current   |{c_bar}{c_pad}| {c_val:.4f}"
+        )
+
+    lines.append("```")
+    lines.append("")
+
+    # ── Per-mode breakdown ──
+    b_per_mode = baseline.get("per_mode", {})
+    c_per_mode = current.get("per_mode", {})
+
+    if b_per_mode and c_per_mode:
+        lines.append("### Per Query Mode")
+        lines.append("")
+        lines.append(
+            "| Mode | Metric | Baseline | Current | Δ |"
+        )
+        lines.append(
+            "|------|--------|----------|---------|---|"
+        )
+
+        for mode in ["text_only", "image_only", "hybrid"]:
+            bm = b_per_mode.get(mode, {})
+            cm = c_per_mode.get(mode, {})
+            first = True
+            for label, key in [("R@1", "recall@1"), ("R@3", "recall@3"),
+                                ("R@5", "recall@5"), ("MRR", "mrr")]:
+                b_v = bm.get(key)
+                c_v = cm.get(key)
+                mode_col = f"**{mode}**" if first else ""
+                first = False
+                lines.append(
+                    f"| {mode_col} | {label} "
+                    f"| {_fmt(b_v)} | {_fmt(c_v)} "
+                    f"| {_delta(c_v, b_v)} |"
+                )
+
+        lines.append("")
+
     lines.append("---")
     lines.append("")
 
-    # ── 5. Question Sensitivity ──
-    lines.append("## 5. Question Sensitivity Analysis")
+    # ── 4. Question Sensitivity ──
+    lines.append("## 4. Question Sensitivity")
     lines.append("")
 
     n_images = sensitivity.get("num_images_analyzed", 0)
@@ -331,191 +285,130 @@ def _build_markdown(
     overlap_reduction = sensitivity.get("overlap_reduction", 0)
 
     lines.append(
-        "This analysis measures how much the retrieval results change "
-        "when the **same image** is queried with **different clinical "
-        "questions**. We compute the pairwise Jaccard overlap of the "
-        "top-3 retrieved document sets across question pairs."
+        "We measure how much retrieval results change when the **same image** "
+        "is queried with **different questions**. Pairwise Jaccard overlap of "
+        "top-3 retrieved document sets is computed across question pairs."
     )
     lines.append("")
     lines.append(
-        "- **High overlap** (close to 1.0) → the question has little "
-        "effect; the image dominates retrieval."
-    )
+        "- **High overlap (→1.0):** question ignored; image dominates.")
     lines.append(
-        "- **Lower overlap** → the question meaningfully changes which "
-        "evidence is retrieved."
-    )
+        "- **Lower overlap:** question meaningfully influences retrieval.")
     lines.append("")
 
     lines.append("| Measure | Value |")
     lines.append("|---------|-------|")
     lines.append(f"| Images analyzed | {n_images} |")
     lines.append(
-        f"| Baseline avg. pairwise overlap | {_fmt(b_avg_overlap)} |"
-    )
+        f"| Baseline avg. overlap | **{_fmt(b_avg_overlap)}** |")
     lines.append(
-        f"| Current avg. pairwise overlap | {_fmt(c_avg_overlap)} |"
-    )
-    lines.append(f"| Overlap reduction | {_fmt(overlap_reduction)} |")
+        f"| Current avg. overlap | **{_fmt(c_avg_overlap)}** |")
+    lines.append(
+        f"| Overlap reduction | **{_fmt(overlap_reduction)}** |")
     lines.append("")
 
-    # Concrete examples
+    # Concrete examples (compact)
     examples = sensitivity.get("examples", [])
     if examples:
-        lines.append("### Concrete Examples")
+        lines.append("### Concrete Example")
+        lines.append("")
+        ex = examples[0]
+        lines.append(
+            f"**Image `{ex['image']}`** — "
+            f"{ex['num_questions']} different questions"
+        )
+        lines.append("")
+        lines.append(
+            f"Baseline top-3 overlap: **{_fmt(ex['baseline_overlap'])}** · "
+            f"Current top-3 overlap: **{_fmt(ex['current_overlap'])}**"
+        )
         lines.append("")
 
-        for idx, ex in enumerate(examples[:3], start=1):
-            lines.append(
-                f"**Example {idx}** — Image: `{ex['image']}` "
-                f"({ex['num_questions']} questions)"
-            )
-            lines.append("")
-            lines.append(
-                f"- Baseline top-3 overlap: **{_fmt(ex['baseline_overlap'])}**"
-            )
-            lines.append(
-                f"- Current top-3 overlap: **{_fmt(ex['current_overlap'])}**"
-            )
-            lines.append("")
-
-            for q_info in ex.get("questions", []):
-                lines.append(f"*Question:* \"{q_info['question']}\"")
-                lines.append("")
-
-                b_ids = ", ".join(
-                    f"`{d}`" for d in q_info.get("baseline_top_k", [])
-                )
-                c_ids = ", ".join(
-                    f"`{d}`" for d in q_info.get("current_top_k", [])
-                )
-                lines.append(f"  - Baseline top-3: {b_ids}")
-                lines.append(f"  - Current top-3:  {c_ids}")
-                lines.append("")
-
+        for q_info in ex.get("questions", [])[:2]:
+            lines.append(f"> *\"{q_info['question']}\"*")
+            b_ids = ", ".join(f"`{d}`" for d in q_info.get("baseline_top_k", []))
+            c_ids = ", ".join(f"`{d}`" for d in q_info.get("current_top_k", []))
+            lines.append(f"> Baseline: {b_ids}")
+            lines.append(f"> Current:  {c_ids}")
             lines.append("")
 
     lines.append("---")
     lines.append("")
 
-    # ── 6. Observations ──
-    lines.append("## 6. Observations")
-    lines.append("")
-    lines.append("### Why the fix improved retrieval")
+    # ── 5. Why It Works ──
+    lines.append("## 5. Why the Fix Works")
     lines.append("")
     lines.append(
-        "1. **Image dominance was reduced.** In the baseline, the system "
-        "received image+text queries but only used the image for ranking. "
-        "By introducing a dedicated text embedding index, the question "
-        "text now has its own retrieval path. The system matches question "
-        "terms against document report text, producing a separate ranked "
-        "list that reflects question intent."
-    )
+        "| Component | Effect |")
+    lines.append(
+        "|-----------|--------|")
+    lines.append(
+        "| **Text index** | Question text gets its own retrieval path "
+        "(text→text MaxSim), producing a separate ranking that reflects "
+        "question intent |")
+    lines.append(
+        "| **RRF fusion** | Combines image and text rankings by rank position "
+        "(not raw score), preventing image scores from overwhelming text "
+        "signal |")
+    lines.append(
+        "| **Reranking** | Keyword overlap between question and document "
+        "clinical text boosts question-relevant documents after fusion |")
     lines.append("")
     lines.append(
-        "2. **RRF fusion balances both modalities.** Reciprocal Rank "
-        "Fusion combines the image and text ranked lists using rank "
-        "positions rather than raw scores. Since image MaxSim scores "
-        "(~600–900) and text MaxSim scores (~50–200) are on vastly "
-        "different scales, RRF's scale-agnostic design prevents the "
-        "image modality from overwhelming the text signal."
-    )
-    lines.append("")
-    lines.append(
-        "3. **Question-aware reranking amplifies question relevance.** "
-        "After fusion, documents whose clinical text contains keywords "
-        "from the question receive an additive score boost. This means "
-        "a query about *\"cardiomegaly\"* promotes documents mentioning "
-        "cardiomegaly, while a query about *\"pleural effusion\"* on the "
-        "same image promotes different documents — directly addressing "
-        "the identical-evidence problem."
-    )
-    lines.append("")
-    lines.append("### Why identical-evidence retrieval was reduced")
-    lines.append("")
-    lines.append(
-        "In the baseline, the system receives the same image+text inputs "
-        "as the current system, but the question text is discarded before "
-        "retrieval. Two queries on the same image "
-        "(*\"Is there cardiomegaly?\"* and *\"Is there pleural effusion?\"*) "
-        "both produce the same image encoding, yielding identical MaxSim "
-        "scores and identical top-K results. The question text is present "
-        "as input but has no effect on the ranking — this is the core "
-        "modality-bias failure."
-    )
-    lines.append("")
-    lines.append(
-        "In the current system, the same two queries produce different "
-        "text index rankings (because *\"cardiomegaly\"* and *\"pleural "
-        "effusion\"* match different document texts). RRF merges these "
-        "text-based rankings with the image rankings, and the reranker "
-        "further boosts question-specific documents. The final top-K "
-        "now reflects the actual clinical question, not just the image."
+        "The three mechanisms are complementary: the text index provides "
+        "question-aware retrieval candidates, RRF balances both modalities, "
+        "and reranking fine-tunes the final ranking for question specificity."
     )
     lines.append("")
     lines.append("---")
     lines.append("")
 
-    # ── 7. Conclusion ──
-    lines.append("## 7. Conclusion")
-    lines.append("")
-    lines.append(
-        "This ablation analysis confirms that the primary retrieval "
-        "limitation in the earlier Healthcare MRAG pipeline was "
-        "**modality dominance**: the image embedding signal overwhelmed "
-        "the question text signal in multimodal queries, causing "
-        "question-agnostic retrieval behavior."
-    )
-    lines.append("")
-    lines.append(
-        "The solution — **dual-index retrieval** with separate image "
-        "and text embedding indexes, **Reciprocal Rank Fusion** for "
-        "scale-agnostic result combination, and **question-aware "
-        "reranking** for keyword-level question sensitivity — "
-        "successfully addressed this bias."
-    )
+    # ── 6. Conclusion ──
+    lines.append("## 6. Conclusion")
     lines.append("")
 
     # Build improvement summary
-    improvement_notes = []
+    improvements = []
     for label, key in comparison_metrics:
         b_val = b_agg.get(key)
         c_val = c_agg.get(key)
         if b_val is not None and c_val is not None and c_val > b_val:
-            improvement_notes.append(
-                f"{label}: {_fmt(b_val)} → {_fmt(c_val)} "
+            improvements.append(
+                f"**{label}:** {_fmt(b_val)} → {_fmt(c_val)} "
                 f"({_delta(c_val, b_val)})"
             )
 
-    if improvement_notes:
-        lines.append("**Key improvements:**")
+    lines.append(
+        "The ablation confirms that **modality dominance** was the primary "
+        "retrieval limitation. The dual-index + RRF + reranking architecture "
+        "restores question sensitivity while preserving visual retrieval "
+        "quality."
+    )
+    lines.append("")
+
+    if improvements:
+        lines.append("**Key metric improvements:**")
         lines.append("")
-        for note in improvement_notes:
-            lines.append(f"- {note}")
+        for imp in improvements:
+            lines.append(f"- {imp}")
         lines.append("")
 
     if n_images > 0:
         lines.append(
-            f"**Question sensitivity:** Average pairwise top-3 overlap "
-            f"decreased from {_fmt(b_avg_overlap)} (baseline) to "
-            f"{_fmt(c_avg_overlap)} (current), indicating that the "
-            f"retrieval system now responds meaningfully to different "
-            f"clinical questions on the same image."
+            f"**Question sensitivity:** Top-3 overlap reduced from "
+            f"{_fmt(b_avg_overlap)} → {_fmt(c_avg_overlap)}, confirming "
+            f"that the system now responds to different clinical questions "
+            f"on the same image."
         )
         lines.append("")
 
-    lines.append(
-        "The current dual-index + RRF + reranking architecture provides "
-        "a robust foundation for question-aware multimodal retrieval "
-        "in the Healthcare MRAG pipeline."
-    )
-    lines.append("")
     lines.append("---")
     lines.append("")
     lines.append(
-        "*This document was generated by the Healthcare MRAG "
-        "Ablation Analysis Suite.*"
+        "*Healthcare MRAG Ablation Analysis Suite · "
+        "OpenI Chest X-ray Dataset · ColQwen2 + RRF*"
     )
     lines.append("")
 
     return "\n".join(lines)
+

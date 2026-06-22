@@ -4,7 +4,7 @@ Ablation Runner — Modality-Bias Ablation Analysis Entry Point.
 Orchestrates the full ablation workflow:
 
     1. Load ColQwen2 embedder and dual index (read-only)
-    2. Build gold-labeled test queries from OpenI
+    2. Build gold-labeled test queries from OpenI (balanced per mode)
     3. Run BASELINE evaluation (question-ignored image+text retrieval)
     4. Run CURRENT SYSTEM evaluation (dual-index + RRF + reranking)
     5. Run question sensitivity analysis
@@ -15,11 +15,20 @@ Output:
     outputs/observations/ablation_results.json
 
 Usage:
+    # Default (50 queries, unbalanced):
     python -m analysis.ablation.run_ablation \\
         --retrieval-config configs/retrieval_config.yaml \\
         --data-config configs/data_config.yaml \\
         --index-dir data/indexes/colqwen2_index \\
         --max-queries 50 \\
+        --output-dir outputs/observations
+
+    # Balanced (40 per mode = 120 total):
+    python -m analysis.ablation.run_ablation \\
+        --retrieval-config configs/retrieval_config.yaml \\
+        --data-config configs/data_config.yaml \\
+        --index-dir data/indexes/colqwen2_index \\
+        --queries-per-mode 40 \\
         --output-dir outputs/observations
 
 IMPORTANT:
@@ -28,9 +37,11 @@ IMPORTANT:
     All output is written to a separate observations directory.
 """
 
+import random
 import shutil
 import argparse
 from pathlib import Path
+from typing import Optional
 
 import yaml
 
@@ -57,6 +68,7 @@ def run_ablation(
     data_config: dict,
     index_dir: str = "data/indexes/colqwen2_index",
     max_queries: int = 50,
+    queries_per_mode: Optional[int] = None,
     top_k_values: list = None,
     output_dir: str = "outputs/observations",
 ) -> str:
@@ -127,16 +139,48 @@ def run_ablation(
     builder.load()
 
     # Build queries for all modes
-    # Focus on hybrid queries (image+text) since that is where
-    # the modality bias problem manifests. Also include text_only
-    # and image_only for completeness.
-    query_modes = ["hybrid", "text_only", "image_only"]
+    query_modes = ["text_only", "image_only", "hybrid"]
+
+    # Build a generous pool — we'll balance/cap afterwards
+    pool_size = (
+        queries_per_mode * 3 if queries_per_mode
+        else max(max_queries // len(query_modes), 5)
+    )
     queries = builder.build_test_queries(
-        max_queries_per_finding=max(max_queries // len(query_modes), 5),
+        max_queries_per_finding=max(pool_size, 20),
         query_modes=query_modes,
     )
 
-    if max_queries and len(queries) > max_queries:
+    # ── Balance per mode (if queries_per_mode is set) ──
+    if queries_per_mode:
+        rng = random.Random(42)
+        by_mode = {m: [] for m in query_modes}
+        for q in queries:
+            m = q["query_mode"]
+            if m in by_mode:
+                by_mode[m].append(q)
+
+        balanced = []
+        for mode in query_modes:
+            pool = by_mode[mode]
+            rng.shuffle(pool)
+            selected = pool[:queries_per_mode]
+            balanced.extend(selected)
+            logger.info(
+                f"  Mode '{mode}': {len(selected)}/{len(pool)} queries selected"
+            )
+            if len(selected) < queries_per_mode:
+                logger.warning(
+                    f"  Only {len(selected)} '{mode}' queries available "
+                    f"(requested {queries_per_mode})"
+                )
+        rng.shuffle(balanced)
+        queries = balanced
+        logger.info(
+            f"Balanced query set: {len(queries)} total "
+            f"({queries_per_mode} per mode x {len(query_modes)} modes)"
+        )
+    elif max_queries and len(queries) > max_queries:
         queries = queries[:max_queries]
 
     # Count by mode
@@ -284,7 +328,18 @@ def main():
         "--max-queries",
         type=int,
         default=50,
-        help="Maximum number of test queries to run",
+        help="Maximum number of test queries (unbalanced cap)",
+    )
+    parser.add_argument(
+        "--queries-per-mode",
+        type=int,
+        default=None,
+        help=(
+            "If set, sample exactly this many queries per mode "
+            "(e.g., --queries-per-mode 40 gives 40 text_only + "
+            "40 image_only + 40 hybrid = 120 balanced). "
+            "Overrides --max-queries."
+        ),
     )
     parser.add_argument(
         "--output-dir",
@@ -305,6 +360,7 @@ def main():
         data_config=data_config,
         index_dir=args.index_dir,
         max_queries=args.max_queries,
+        queries_per_mode=args.queries_per_mode,
         output_dir=args.output_dir,
     )
 
