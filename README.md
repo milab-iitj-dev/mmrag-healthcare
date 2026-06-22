@@ -37,19 +37,33 @@ A modular system for medical image understanding that combines vision-language m
 │   ├── ingestion/                # Data loading (OpenI chest X-rays)
 │   ├── embeddings/               # ColQwen2 multi-vector embeddings
 │   ├── indexing/                 # Document store and index building
-│   ├── retrieval/                # ColQwen2 MaxSim retrieval
+│   ├── retrieval/                # ColQwen2 MaxSim + hybrid retrieval
 │   ├── context/                  # Context building from retrieved evidence
-│   ├── generation/               # LLaVA VLM wrappers and RAG generator
+│   ├── generation/               # VLM wrappers and RAG generator
 │   ├── evaluation/               # Metrics and evaluation runner
 │   ├── reranking/                # Cross-encoder reranking
 │   ├── verification/             # Self-check utilities
 │   └── utils/                    # Device, logging, image utilities
 │
+├── analysis/                     # Standalone analysis and ablation tools
+│   └── ablation/                 # Modality-bias ablation analysis
+│       ├── run_ablation.py       # Entry point — orchestrates full ablation
+│       ├── baseline_evaluator.py # Question-ignored (pre-fix) evaluation
+│       ├── current_evaluator.py  # Dual-index + RRF (post-fix) evaluation
+│       ├── sensitivity_analyzer.py # Question sensitivity (Jaccard overlap)
+│       ├── report_writer.py      # Observing document + JSON generation
+│       └── verify_modules.py     # Quick verification with mock data
+│
+├── evaluation/                   # Benchmarking and evaluation framework
+│   ├── datasets/                 # Test dataset builders (OpenI, VQA-RAD)
+│   ├── metrics/                  # Retrieval and generation metrics
+│   ├── runners/                  # Benchmark runners
+│   └── reporting/                # Result formatting and export
+│
 ├── pipelines/                    # End-to-end orchestrators
 │   ├── simple_vqa.py             # Phase 1: Direct VQA
 │   ├── rag_vqa.py                # Phase 2: RAG VQA
-│   ├── offline_indexing.py       # Index builder
-│   └── evaluation.py             # Evaluation runner
+│   └── offline_indexing.py       # Index builder
 │
 ├── ui/                           # Professional inference UI (Gradio)
 │   ├── app.py                    # Gradio Blocks application
@@ -138,6 +152,32 @@ python scripts/launch_ui.py --share
 ```
 
 Open **http://localhost:7860** — upload a chest X-ray, type a question, click **Analyze**.
+
+### Ablation Analysis — Modality Bias Evaluation
+
+The ablation module compares **baseline** (question-ignored image+text retrieval) vs **current system** (dual-index + RRF + question-aware reranking) to quantify the modality-bias fix.
+
+```bash
+# Quick verification with mock data (no GPU required)
+python -m analysis.ablation.verify_modules
+
+# Full ablation analysis (requires GPU + built index)
+python -m analysis.ablation.run_ablation \
+    --retrieval-config configs/retrieval_config.yaml \
+    --data-config configs/data_config.yaml \
+    --index-dir data/indexes/colqwen2_index \
+    --max-queries 50 \
+    --output-dir outputs/observations
+```
+
+**Output:**
+- `outputs/observations/observing_document.md` — Full analysis report with side-by-side comparison tables
+- `outputs/observations/ablation_results.json` — Raw metrics for programmatic analysis
+
+The ablation measures:
+- **Recall@k, MRR, nDCG@k** for both baseline and current system
+- **Question sensitivity** via pairwise Jaccard overlap (same image, different questions)
+- **Per-mode breakdown** across hybrid, text-only, and image-only queries
 
 ---
 
