@@ -99,14 +99,14 @@ def run_baseline_evaluation(
             if query_image is not None:
                 # ── BASELINE: QUESTION-IGNORED RETRIEVAL ──
                 # The system receives image + question (same as current),
-                # but the question is NOT used for ranking. A generic
-                # string replaces the actual question, so retrieval is
-                # driven entirely by image similarity. This is the core
-                # modality-bias failure: the same image always produces
-                # the same results regardless of what question was asked.
+                # but the question is NOT used for ranking. Pass an empty
+                # query to ensure pure image-similarity retrieval.
+                # This reproduces the core modality-bias failure: the same
+                # image always produces the same results regardless of
+                # what question was asked.
                 retrieved = retriever.retrieve_by_image(
                     query_image,
-                    query="What does this image show?",
+                    query="",
                     top_k=max_k,
                 )
             else:

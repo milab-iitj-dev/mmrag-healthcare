@@ -201,11 +201,30 @@ def run_retrieval_benchmark(
             query_text = "What does this image show?"
 
         try:
-            retrieved = retriever.retrieve(
-                query=query_text,
-                query_image=query_image,
-                top_k=max_k,
-            )
+            # Route to the correct retrieval path based on mode
+            if q["query_mode"] == "image_only":
+                # Image-only: bypass HybridRetriever text routing.
+                # Call the underlying ColQwen2 image retrieval directly
+                # to avoid triggering dual-index + RRF when text is present.
+                if hasattr(retriever, 'colqwen2'):
+                    # HybridRetriever → use underlying ColQwen2
+                    retrieved = retriever.colqwen2.retrieve_by_image(
+                        query_image, query="", top_k=max_k,
+                    )
+                else:
+                    # ColQwen2Retriever directly
+                    retrieved = retriever.retrieve_by_image(
+                        query_image, query="", top_k=max_k,
+                    )
+            else:
+                # text_only and hybrid: use the full retrieve() path
+                # which handles text-only → text index and
+                # hybrid → dual-index + RRF + reranking correctly.
+                retrieved = retriever.retrieve(
+                    query=query_text,
+                    query_image=query_image,
+                    top_k=max_k,
+                )
 
             retrieved_ids = [doc.doc_id for doc in retrieved]
 

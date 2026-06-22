@@ -95,14 +95,23 @@ def run_current_evaluation(
 
         try:
             # ── CURRENT SYSTEM BEHAVIOR ──
-            # Full HybridRetriever with dual-index + RRF + reranking.
-            # The question text influences retrieval through all three
-            # mechanisms (text index, RRF fusion, reranking).
-            retrieved = retriever.retrieve(
-                query=query_text,
-                query_image=query_image,
-                top_k=max_k,
-            )
+            # Route correctly by query mode:
+            if q["query_mode"] == "image_only":
+                # Image-only: use the image index directly, bypassing
+                # HybridRetriever's text routing which would trigger
+                # dual-index + RRF even for pure image queries.
+                retrieved = retriever.colqwen2.retrieve_by_image(
+                    query_image, query="", top_k=max_k,
+                )
+            else:
+                # text_only and hybrid: full HybridRetriever path.
+                # text_only → text index + reranking
+                # hybrid → dual-index + RRF + reranking
+                retrieved = retriever.retrieve(
+                    query=query_text,
+                    query_image=query_image,
+                    top_k=max_k,
+                )
 
             retrieved_ids = [doc.doc_id for doc in retrieved]
 
